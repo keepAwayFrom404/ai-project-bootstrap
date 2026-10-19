@@ -1,7 +1,18 @@
 import { fact } from './common.mjs';
 export async function analyze({ files, readText }) {
-  if (!files.some(({ path }) => path === 'package.json')) return [];
-  const pkg = JSON.parse(await readText('package.json'));
   const preferred = ['check', 'test', 'lint', 'build'];
-  return preferred.filter((name) => pkg.scripts?.[name]).map((name) => fact('quality-command', `npm ${name === 'test' ? 'test' : `run ${name}`}`, 'package.json', `scripts.${name}`));
+  const results = [];
+  for (const { path } of files.filter(({ path }) => /(?:^|\/)package\.json$/.test(path)).sort((a, b) => a.path.localeCompare(b.path))) {
+    let pkg;
+    try { pkg = JSON.parse(await readText(path)); } catch { continue; }
+    const packageRoot = path === 'package.json' ? null : path.slice(0, -'/package.json'.length);
+    for (const name of preferred) {
+      if (!pkg.scripts?.[name]) continue;
+      const command = packageRoot
+        ? `npm --prefix ${packageRoot} run ${name}`
+        : `npm ${name === 'test' ? 'test' : `run ${name}`}`;
+      results.push(fact('quality-command', command, path, `scripts.${name}`));
+    }
+  }
+  return results;
 }

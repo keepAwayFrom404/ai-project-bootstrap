@@ -55,11 +55,20 @@ export async function validateGovernance({ repo, manifest }) {
   } catch {}
   if (!Array.isArray(manifest?.quality_commands) || manifest.quality_commands.length === 0) errors.push('missing executable quality command');
   else {
-    let scripts = {};
-    try { scripts = JSON.parse(await readFile(join(repo, 'package.json'), 'utf8')).scripts ?? {}; } catch {}
     for (const command of manifest.quality_commands) {
-      const match = /^npm (?:run )?([^ ]+)$/.exec(command);
-      if (!match || !scripts[match[1]]) errors.push(`quality command is not executable from package scripts: ${command}`);
+      const rootMatch = /^npm (?:run )?([A-Za-z0-9:_-]+)$/.exec(command);
+      const nestedMatch = /^npm --prefix ([^ ]+) run ([A-Za-z0-9:_-]+)$/.exec(command);
+      let packagePath = 'package.json';
+      let scriptName = rootMatch?.[1];
+      if (nestedMatch) {
+        try { packagePath = `${await resolveInsideRepository(repo, nestedMatch[1])}/package.json`; }
+        catch { errors.push(`quality command is not executable from package scripts: ${command}`); continue; }
+        scriptName = nestedMatch[2];
+      }
+      if (!scriptName) { errors.push(`quality command is not executable from package scripts: ${command}`); continue; }
+      let scripts = {};
+      try { scripts = JSON.parse(await readFile(nestedMatch ? packagePath : join(repo, packagePath), 'utf8')).scripts ?? {}; } catch {}
+      if (!scripts[scriptName]) errors.push(`quality command is not executable from package scripts: ${command}`);
     }
   }
   for (const path of manifest?.optional_documents ?? []) {

@@ -41,6 +41,23 @@ test('stack and recommendations include nested frontend package manifests', asyn
   assert.ok(ids.includes('ui-antd-design-tokens'));
 });
 
+test('quality commands include executable scripts from nested package manifests', async (t) => {
+  const fixture = await createRepoFixture({ files: {
+    'README.md': '# workspace\n',
+    'apps/web/package.json': JSON.stringify({ scripts: { test: 'vitest run', build: 'vite build' } }),
+  } });
+  t.after(() => fixture.cleanup());
+  const result = await scanner.analyzeRepository({ repo: fixture.root });
+  assert.deepEqual(result.analyzers.commands.map(({ value, source_path }) => ({ value, source_path })), [
+    { value: 'npm --prefix apps/web run build', source_path: 'apps/web/package.json' },
+    { value: 'npm --prefix apps/web run test', source_path: 'apps/web/package.json' },
+  ]);
+  assert.deepEqual(result.analyzers.quality.map(({ value }) => value), [
+    'npm --prefix apps/web run build',
+    'npm --prefix apps/web run test',
+  ]);
+});
+
 test('recommendation packs are stack-gated and never authorize implicit mutation', async (t) => {
   const repo = await createRepoFixture({ files: {
     'package.json': JSON.stringify({ dependencies: { express: '^5.0.0', react: '^18.0.0', typescript: '^5.0.0' } }),

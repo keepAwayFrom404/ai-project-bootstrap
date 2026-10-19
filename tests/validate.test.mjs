@@ -97,3 +97,22 @@ test('governance validation rejects registry and optional-document escapes', asy
   assert.equal(result.ok, false);
   assert.match(result.errors.join('\n'), /outside|escape|relative/i);
 });
+
+test('governance validation accepts declared scripts from a nested package', async (t) => {
+  const fixture = await createRepoFixture({ files: {
+    'AGENTS.md': '# agents\n',
+    'docs/agent/README.md': '| concern | authoritative path | scope | owner |\n| --- | --- | --- | --- |\n| rules | docs/agent/project-rules.md | repo | team |\n',
+    'docs/agent/project-rules.md': '# rules\n',
+    '.ai-project-bootstrap/manifest.yaml': '{"schema_version":"ai-project-bootstrap.manifest.v1"}\n',
+    'apps/web/package.json': JSON.stringify({ scripts: { test: 'vitest run', build: 'vite build' } }),
+  } });
+  t.after(() => fixture.cleanup());
+  const result = await validateApi.validateGovernance({
+    repo: fixture.root,
+    manifest: {
+      schema_version: 'ai-project-bootstrap.manifest.v1',
+      quality_commands: ['npm --prefix apps/web run test', 'npm --prefix apps/web run build'],
+    },
+  });
+  assert.deepEqual(result.errors, []);
+});
