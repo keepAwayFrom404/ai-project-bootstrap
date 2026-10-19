@@ -131,6 +131,20 @@ test('coverage requires a registered authority and does not combine scattered do
   assert.equal(coverage.authority_path, 'docs/agent/frontend.md');
 });
 
+test('coverage recognizes equivalent English frontend verification and test-level rules', async (t) => {
+  const repo = await createRepoFixture({ files: {
+    'package.json': JSON.stringify({ dependencies: { react: '^19.0.0', typescript: '^5.0.0' }, scripts: { test: 'vitest run' } }),
+    'web/src/App.tsx': 'export default function App() { return null; }\n',
+    'docs/agent/README.md': '# Registry\n| concern | authoritative path | scope | owner |\n| --- | --- | --- | --- |\n| Frontend engineering | docs/agent/rules.md | web | team |\n| Testing and quality | docs/agent/rules.md | repo | team |\n',
+    'docs/agent/rules.md': '# Rules\nReact component boundaries use TypeScript domain types. Shared state and API calls use services/api. Verify frontend changes with focused tests and a production build. Run npm test. The verification matrix maps changes to unit level, component level, integration level, and regression tests. Tenant isolation tests are required when authentication exists.\n',
+  } });
+  t.after(() => repo.cleanup());
+  const evidence = await scanner.analyzeRepository({ repo: repo.root });
+  const coverage = new Map(evidence.analyzers.governanceCoverage.map((item) => [item.concern, item]));
+  assert.equal(coverage.get('frontend-engineering').value, 'covered');
+  assert.equal(coverage.get('testing-quality').value, 'covered');
+});
+
 test('missing topics are evaluated against the registered authority itself', async (t) => {
   const repo = await createRepoFixture({ files: {
     'package.json': JSON.stringify({ dependencies: { express: '^5.0.0' } }),

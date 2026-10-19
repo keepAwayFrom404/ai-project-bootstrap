@@ -12,7 +12,7 @@ const CONCERNS = [
       ['component-boundaries', /component|组件|页面拆分|Hooks?/i],
       ['data-and-state', /state|状态管理|API 调用|services\/api/i],
       ['typing', /TypeScript|类型|types\//i],
-      ['verification', /前端.*(?:测试|构建)|test.*frontend|build:web/i],
+      ['verification', /前端.*(?:测试|构建)|(?:test|verif|build).*front[- ]?end|front[- ]?end.*(?:test|verif|build)|build:web/i],
     ],
   },
   {
@@ -77,8 +77,8 @@ const CONCERNS = [
     expected: ({ paths, scripts }) => paths.some((path) => /(?:^|\/)(?:tests?|__tests__)\//.test(path) || /\.test\./.test(path)) || [...scripts].some((name) => /test|check|lint/.test(name)),
     topics: [
       ['commands', /npm (?:run )?(?:test|check|lint)|测试命令|quality command/i],
-      ['test-levels', /单元测试|集成测试|E2E|contract test|回归测试/i],
-      ['change-matrix', /变更.*测试|测试.*范围|何时.*测试|验证矩阵/i],
+      ['test-levels', /单元测试|集成测试|E2E|contract test|回归测试|unit level|component level|integration level|regression test/i],
+      ['change-matrix', /变更.*测试|测试.*范围|何时.*测试|验证矩阵|verification matrix|change.*test|test.*scope/i],
       ['isolation', /隔离回归|跨用户|跨店铺|tenant.*test/i],
     ],
   },
