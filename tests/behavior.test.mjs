@@ -169,6 +169,14 @@ test('skill metadata and entrypoint expose the three modes and confirmation boun
   assert.ok(short.length >= 25 && short.length <= 64);
 });
 
+test('skill keeps safe no-conflict initialization protocol internal', async () => {
+  const skill = await readFile(new URL('../SKILL.md', import.meta.url), 'utf8');
+  assert.match(skill, /only creates unambiguous governance files/);
+  assert.match(skill, /without exposing protocol details/);
+  assert.match(skill, /Do not make users operate internal schemas, plan hashes/);
+  assert.match(skill, /existing human-owned file would change/);
+});
+
 test('controlled loaded-Skill forward checks preserve files when decisions are deferred', async () => {
   const evidence = JSON.parse(await readFile(new URL('./behavior/evidence/after-skill-controlled-runs.json', import.meta.url), 'utf8'));
   assert.equal(evidence.schema_version, 'ai-project-bootstrap.controlled-behavior.v1');

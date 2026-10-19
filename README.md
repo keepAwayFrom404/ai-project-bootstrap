@@ -11,6 +11,7 @@ The repository root is the canonical Skill source. Copies under a consumer repos
 - Preserves human-owned guidance and stops on authority conflicts or drift.
 - Validates the core governance registry and managed manifest.
 - Offers stack-gated recommendations without silently adopting them.
+- Keeps evidence and plan-hash mechanics internal for safe, unambiguous initialization; users are interrupted only for real conflicts or decisions.
 
 It does not replace feature-development workflows, OpenSpec/Comet, `ai-dev-grow`, AgentMemory, CodeGraph, tests, or CI.
 
