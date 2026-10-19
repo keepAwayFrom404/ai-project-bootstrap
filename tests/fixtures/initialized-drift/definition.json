@@ -1,0 +1,8 @@
+{
+  "files": {
+    "README.md": "# Initialized project\nThe root validation command changed after initialization.\n",
+    "AGENTS.md": "Human-owned: retain this release policy.\n<!-- bootstrap:begin -->\nValidation: npm test\n<!-- bootstrap:end -->\n",
+    "package.json": "{\"name\":\"drift-fixture\",\"scripts\":{\"check\":\"node --check index.js\"}}\n",
+    "index.js": "export const ready = true;\n"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "files": {
+    "README.md": "# Node workspace\nUse the root workspace scripts.\n",
+    "package.json": "{\"name\":\"fixture-workspace\",\"private\":true,\"workspaces\":[\"packages/*\"],\"scripts\":{\"test\":\"node --test\"}}\n",
+    "packages/core/package.json": "{\"name\":\"fixture-core\",\"private\":true}\n",
+    "packages/core/index.js": "export const answer = 42;\n",
+    "AGENTS.md": "Human-owned: run root workspace scripts before committing.\n"
+  }
+}

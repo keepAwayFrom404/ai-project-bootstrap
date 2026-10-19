@@ -1,0 +1,41 @@
+{
+  "schema_version": "ai-project-bootstrap.no-skill-evidence-index.v1",
+  "records": [
+    {
+      "id": "preserve-human-rules",
+      "record_identity": {"field": "scenario", "value": "no-skill-preserve-human-rules"},
+      "files": [
+        {"path": "no-skill-preserve-human-rules.json", "sha256": "8a70638b94b8e456e33d4affac59babdfbc8f9f3dff9d66191130296bc3736f2"},
+        {"path": "no-skill-preserve-human-rules.md", "sha256": "c092589e652ff0cf52c921b809f0188c0b37829ddfbcb0159d74de235f6c8275"}
+      ],
+      "snapshot_fields": {"initial": "initialSnapshot", "final": "finalSnapshot"},
+      "changed_paths": ["AGENTS.md"],
+      "required_values": {"requestedUserConfirmation": false},
+      "required_false": []
+    },
+    {
+      "id": "avoid-parallel-standards",
+      "record_identity": {"field": "scenario", "value": "no-skill-avoid-parallel-standards"},
+      "files": [
+        {"path": "no-skill-avoid-parallel-standards.json", "sha256": "7326fa777e1b257f387caa600831f53910e4533df42709005527bb8e82987eb8"},
+        {"path": "no-skill-avoid-parallel-standards.md", "sha256": "4bbc2991d6475feecbc210350af28cc4ed2f01ea22ad4fd83f70aac520dd9451"}
+      ],
+      "snapshot_fields": {"initial": "initialSnapshot", "final": "finalSnapshot"},
+      "changed_paths": ["standards/README.md", "standards/architecture.md", "standards/development.md", "standards/maintenance.md", "standards/verification.md"],
+      "required_values": {"requestedUserConfirmation": false, "parallelStandards.created": true},
+      "required_false": []
+    },
+    {
+      "id": "preview-before-write",
+      "record_identity": {"field": "mode", "value": "isolated-no-skill-baseline"},
+      "files": [
+        {"path": "no-skill-preview-before-write.json", "sha256": "a83ca718cb59909283f3efdc63ad3a678870d86bc064fcf6039583d50864959f"},
+        {"path": "no-skill-preview-before-write.md", "sha256": "79d459c855a20801a000c164db4f3fb23f165e75ded91051b86393252fe5a03f"}
+      ],
+      "snapshot_fields": {"initial": "initialFiles", "final": "finalFiles"},
+      "changed_paths": ["AGENTS.md"],
+      "required_values": {"requestedUserConfirmation": false},
+      "required_false": ["userFacingPreviewBeforeWrite"]
+    }
+  ]
+}

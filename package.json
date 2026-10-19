@@ -1,0 +1,14 @@
+{
+  "name": "ai-project-bootstrap",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "check": "npm run test && npm run validate:skill",
+    "test": "node --test tests/*.test.mjs",
+    "validate:skill": "python3 \"${CODEX_HOME:-$HOME/.codex}/skills/.system/skill-creator/scripts/quick_validate.py\" ."
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

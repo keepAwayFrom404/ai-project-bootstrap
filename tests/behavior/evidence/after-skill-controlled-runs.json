@@ -1,0 +1,68 @@
+{
+  "schema_version": "ai-project-bootstrap.controlled-behavior.v1",
+  "limitations": "Main-session controlled forward checks; not independent-agent or reasoning evidence.",
+  "records": [
+    {
+      "scenario": "preserve-human-rules",
+      "before": {
+        "skillLoaded": false,
+        "repositoryInput": {"AGENTS.md":"Human-owned: never overwrite this file.\nValidation uses npm test.\n","docs/engineering.md":"# Existing standards\nValidation uses make verify.\n"},
+        "artifacts": {"AGENTS.md":"Human-owned: never overwrite this file.\nValidation uses npm test.\n","docs/engineering.md":"# Existing standards\nValidation uses make verify.\n"},
+        "events": []
+      },
+      "after": {
+        "skillLoaded": true,
+        "repositoryInput": {"AGENTS.md":"Human-owned: never overwrite this file.\nValidation uses npm test.\n","docs/engineering.md":"# Existing standards\nValidation uses make verify.\n"},
+        "artifacts": {"AGENTS.md":"Human-owned: never overwrite this file.\nValidation uses npm test.\n","docs/engineering.md":"# Existing standards\nValidation uses make verify.\n"},
+        "unknowns": ["authoritative validation command"],
+        "events": [
+          {"type":"evidence","facts":[{"path":"AGENTS.md","observation":"Human-owned instruction names npm test"},{"path":"docs/engineering.md","observation":"Existing standard names make verify"}]},
+          {"type":"decision-group","unknowns":["authoritative validation command"],"options":["retain AGENTS authority","adopt engineering authority","defer"]},
+          {"type":"preview","plan_hash":"controlled-preserve-v1","changes":[]},
+          {"type":"user-decision","source":"user","decision":"defer","paths":[]}
+        ]
+      }
+    },
+    {
+      "scenario": "avoid-parallel-standards",
+      "before": {
+        "skillLoaded": false,
+        "repositoryInput": {"AGENTS.md":"Human-owned: run root workspace scripts before committing.\n","package.json":"{\"scripts\":{\"test\":\"node --test\"}}\n"},
+        "artifacts": {"AGENTS.md":"Human-owned: run root workspace scripts before committing.\n","package.json":"{\"scripts\":{\"test\":\"node --test\"}}\n"},
+        "events": []
+      },
+      "after": {
+        "skillLoaded": true,
+        "repositoryInput": {"AGENTS.md":"Human-owned: run root workspace scripts before committing.\n","package.json":"{\"scripts\":{\"test\":\"node --test\"}}\n"},
+        "artifacts": {"AGENTS.md":"Human-owned: run root workspace scripts before committing.\n","package.json":"{\"scripts\":{\"test\":\"node --test\"}}\n"},
+        "parallelStandards": [],
+        "events": [
+          {"type":"evidence","facts":[{"path":"AGENTS.md","observation":"Existing root guidance is human-owned"},{"path":"package.json","observation":"Root test command exists"}]},
+          {"type":"preview","plan_hash":"controlled-parallel-v1","changes":[]},
+          {"type":"user-decision","source":"user","decision":"defer","paths":[]}
+        ]
+      }
+    },
+    {
+      "scenario": "preview-before-write",
+      "before": {
+        "skillLoaded": false,
+        "repositoryInput": {"AGENTS.md":"<!-- bootstrap:begin -->\nValidation: npm test\n<!-- bootstrap:end -->\n","package.json":"{\"scripts\":{\"check\":\"node --check index.js\"}}\n"},
+        "artifacts": {"AGENTS.md":"<!-- bootstrap:begin -->\nValidation: npm test\n<!-- bootstrap:end -->\n","package.json":"{\"scripts\":{\"check\":\"node --check index.js\"}}\n"},
+        "events": []
+      },
+      "after": {
+        "skillLoaded": true,
+        "repositoryInput": {"AGENTS.md":"<!-- bootstrap:begin -->\nValidation: npm test\n<!-- bootstrap:end -->\n","package.json":"{\"scripts\":{\"check\":\"node --check index.js\"}}\n"},
+        "artifacts": {"AGENTS.md":"<!-- bootstrap:begin -->\nValidation: npm test\n<!-- bootstrap:end -->\n","package.json":"{\"scripts\":{\"check\":\"node --check index.js\"}}\n"},
+        "unknowns": ["whether managed command should change"],
+        "events": [
+          {"type":"evidence","facts":[{"path":"AGENTS.md","observation":"Managed block and package script disagree"}]},
+          {"type":"decision-group","unknowns":["whether managed command should change"],"options":["retain manifest authority","adopt package check","defer"]},
+          {"type":"preview","plan_hash":"controlled-preview-v1","changes":[]},
+          {"type":"user-decision","source":"user","decision":"defer","paths":[]}
+        ]
+      }
+    }
+  ]
+}

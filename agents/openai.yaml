@@ -1,0 +1,6 @@
+interface:
+  display_name: "AI Project Bootstrap"
+  short_description: "Safely initialize or reconcile repository AI governance"
+  default_prompt: "Use $ai-project-bootstrap to analyze this repository and preview a safe governance bootstrap plan."
+policy:
+  allow_implicit_invocation: true

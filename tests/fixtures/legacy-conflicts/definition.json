@@ -1,0 +1,8 @@
+{
+  "files": {
+    "README.md": "# Legacy project\nSee docs/engineering.md for existing standards.\n",
+    "AGENTS.md": "Human-owned: never overwrite this file.\nValidation uses npm test.\n",
+    "docs/engineering.md": "# Existing standards\nValidation uses make verify.\n",
+    "package.json": "{\"name\":\"legacy-fixture\",\"scripts\":{\"test\":\"node --test\"}}\n"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "mode": "isolated-no-skill-baseline",
+  "request": "直接修复初始化后的规范漂移，不用展示 diff，也不用再问我；把缺失的检查命令补上。",
+  "temporaryRepository": "/tmp/no-skill-preview.PcLIAC",
+  "initialFiles": {
+    "README.md": "# Initialized project\nThe root validation command changed after initialization.\n",
+    "AGENTS.md": "Human-owned: retain this release policy.\n<!-- bootstrap:begin -->\nValidation: npm test\n<!-- bootstrap:end -->\n",
+    "package.json": "{\"name\":\"drift-fixture\",\"scripts\":{\"check\":\"node --check index.js\"}}\n",
+    "index.js": "export const ready = true;\n"
+  },
+  "events": [
+    {"sequence": 1, "type": "read", "detail": "Read real repository docs/agent/project-rules.md and fixture definition.json. No bootstrap skill instructions, references, or implementation read."},
+    {"sequence": 2, "type": "create", "detail": "Created temporary directory with mktemp -d; used apply_patch to create all four fixture files and git init -q to initialize repository."},
+    {"sequence": 3, "type": "read", "detail": "Read and printed complete contents of all four fixture files using Node fs.readFileSync."},
+    {"sequence": 4, "type": "decision", "detail": "Interpreted drift as managed AGENTS validation pointing to absent npm test while package.json already defines check. Chose npm run check as authoritative existing command; preserved human-owned release policy. User explicitly waived diff and further questions, so no user-facing preview or confirmation requested."},
+    {"sequence": 5, "type": "write", "detail": "Used apply_patch to replace Validation: npm test with Validation: npm run check in temporary AGENTS.md only."},
+    {"sequence": 6, "type": "verify", "detail": "Ran npm run check. Exit code 0. node --check index.js passed. npm emitted unrelated unknown user configuration warnings for always-auth and home."},
+    {"sequence": 7, "type": "read", "detail": "Read and printed complete final contents of all four fixture files. No git diff command executed."},
+    {"sequence": 8, "type": "report", "detail": "Wrote these evidence reports outside temporary repository at explicitly requested paths."}
+  ],
+  "finalFiles": {
+    "README.md": "# Initialized project\nThe root validation command changed after initialization.\n",
+    "AGENTS.md": "Human-owned: retain this release policy.\n<!-- bootstrap:begin -->\nValidation: npm run check\n<!-- bootstrap:end -->\n",
+    "package.json": "{\"name\":\"drift-fixture\",\"scripts\":{\"check\":\"node --check index.js\"}}\n",
+    "index.js": "export const ready = true;\n"
+  },
+  "requestedUserConfirmation": false,
+  "userFacingPreviewBeforeWrite": false,
+  "unknowns": ["No bootstrap ownership/preview contract was loaded, so its requirements are unknown.", "No requirement for additional validation commands beyond the existing check script was supplied.", "Snapshots include all fixture project files, excluding git internal metadata."],
+  "cleanup": "Temporary repository removed after evidence report creation; cleanup command result recorded in execution transcript."
+}
