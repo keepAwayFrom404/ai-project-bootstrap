@@ -1,9 +1,11 @@
 #!/usr/bin/env node
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { constants } from 'node:fs';
-import { access, lstat, mkdir, readFile, readdir, realpath, rename, rm, stat, writeFile } from 'node:fs/promises';
-import { basename, dirname, join, relative, resolve, sep } from 'node:path';
+import { access, lstat, mkdir, open, readFile, readdir, realpath, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { basename, dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+import { mergeInstalledFile, utf8 } from './lib/install-merge.mjs';
 
 const SOURCE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const INSTALL_ROOT = '.agents/skills/ai-project-bootstrap';
@@ -18,19 +20,23 @@ function parseArgs(argv) {
   for (let index = 0; index < rest.length; index += 2) {
     const flag = rest[index];
     const value = rest[index + 1];
-    if (!flag?.startsWith('--') || value === undefined) throw new Error(`Invalid option: ${flag ?? '<missing>'}`);
+    if (!flag?.startsWith('--') || value === undefined || Object.hasOwn(options, flag.slice(2))) throw new Error(`Invalid option: ${flag ?? '<missing>'}`);
     options[flag.slice(2)] = value;
   }
-  if (!['preview', 'apply', 'adopt-preview', 'adopt-apply'].includes(command)) {
-    throw new Error('Command must be preview, apply, adopt-preview, or adopt-apply');
+  if (!['preview', 'apply', 'review', 'adopt-preview', 'adopt-apply'].includes(command)) {
+    throw new Error('Command must be preview, apply, review, adopt-preview, or adopt-apply');
   }
   if (!options.repo) throw new Error('Required option: --repo');
   if (command.endsWith('apply') && !options['expected-plan-hash']) throw new Error('Apply requires --expected-plan-hash');
+  const allowed = new Set(['repo', 'expected-plan-hash', 'resolutions', 'path']);
+  if (Object.keys(options).some((key) => !allowed.has(key))) throw new Error('Unknown option');
+  if (command.startsWith('adopt-') && options.resolutions) throw new Error('Adoption does not accept install resolutions');
+  if (command === 'review' && !options.path) throw new Error('Review requires --path');
   return { command, options };
 }
 
 async function exists(path) {
-  try { await access(path, constants.F_OK); return true; } catch { return false; }
+  try { await access(path, constants.F_OK); return true; } catch (error) { if (error.code === 'ENOENT') return false; throw error; }
 }
 
 function assertInside(root, path) {
@@ -52,7 +58,7 @@ async function assertNoSymlinkPath(root, target) {
   }
 }
 
-async function listSourceFiles() {
+async function listSourceFiles(sourceRoot = SOURCE_ROOT) {
   const files = [];
   async function walk(path, rel) {
     const entry = await lstat(path);
@@ -63,7 +69,7 @@ async function listSourceFiles() {
     }
     if (entry.isFile() && !EXCLUDED_SOURCE_FILES.has(rel)) files.push(rel);
   }
-  for (const root of INCLUDED_ROOTS) await walk(join(SOURCE_ROOT, root), root);
+  for (const root of INCLUDED_ROOTS) await walk(join(sourceRoot, root), root);
   return files;
 }
 
@@ -74,54 +80,131 @@ async function readJson(path, fallback = null) {
 
 async function hashFile(path) { return sha256(await readFile(path)); }
 
-export async function createInstallPlan(repoInput) {
+function safeResourcePath(path) {
+  if (typeof path !== 'string' || !path || path.includes('\\') || path.includes(':') || isAbsolute(path)
+    || path.split('/').some((part) => !part || part === '.' || part === '..')
+    || !INCLUDED_ROOTS.some((root) => path === root || (['agents', 'references', 'scripts'].includes(root) && path.startsWith(root + '/')))
+    || EXCLUDED_SOURCE_FILES.has(path)) throw new Error(`Invalid managed resource path: ${path}`);
+  return path;
+}
+const digest = (value) => value === null ? null : sha256(value);
+const validHash = (value) => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
+const mapLike = (value) => value !== null && typeof value === 'object' && !Array.isArray(value);
+
+async function resource(repo, destination, path) {
+  const target = join(destination, safeResourcePath(path));
+  await assertNoSymlinkPath(repo, target);
+  try {
+    if (!(await lstat(target)).isFile()) throw new Error(`Managed resource is not a regular file: ${path}`);
+    return await readFile(target);
+  } catch (error) { if (error.code === 'ENOENT') return null; throw error; }
+}
+
+function validateManifest(previous) {
+  if (!mapLike(previous) || !['ai-project-bootstrap.install.v1', 'ai-project-bootstrap.install.v2'].includes(previous.schema_version) || !mapLike(previous.files)) throw new Error('Unsupported or invalid installation manifest');
+  for (const [path, hash] of Object.entries(previous.files)) {
+    safeResourcePath(path);
+    if (!validHash(hash)) throw new Error('Invalid upstream digest in installation manifest');
+  }
+  if (previous.local_overrides !== undefined) {
+    if (!mapLike(previous.local_overrides)) throw new Error('Invalid local overrides');
+    for (const [path, entry] of Object.entries(previous.local_overrides)) {
+      safeResourcePath(path);
+      if (!mapLike(entry) || (entry.sha256 !== null && !validHash(entry.sha256))) throw new Error('Invalid local override digest');
+    }
+  }
+}
+
+export async function createInstallPlan(repoInput, options = {}) {
   const repo = await realpath(resolve(repoInput));
-  if (!(await stat(repo)).isDirectory()) throw new Error('Target repository must be a directory');
-  if (!(await exists(join(repo, '.git')))) throw new Error('Target must be an initialized Git repository');
+  if (!(await stat(repo)).isDirectory() || !(await exists(join(repo, '.git')))) throw new Error('Target must be an initialized Git repository');
+  const sourceRoot = await realpath(options.sourceRoot ?? SOURCE_ROOT);
+  const resolutions = options.resolutions === undefined ? {} : options.resolutions;
+  if (!mapLike(resolutions)) throw new Error('Resolutions must be a path-to-decision object');
   const destination = join(repo, INSTALL_ROOT);
   await assertNoSymlinkPath(repo, destination);
   const manifestPath = join(destination, MANIFEST_NAME);
-  const previous = await readJson(manifestPath, { schema_version: 'ai-project-bootstrap.install.v1', files: {} });
-  if (previous.schema_version !== 'ai-project-bootstrap.install.v1') throw new Error('Unsupported installation manifest schema');
-
-  const sourceFiles = await listSourceFiles();
-  const desired = {};
-  for (const path of sourceFiles) desired[path] = await hashFile(join(SOURCE_ROOT, path));
-  const actions = [];
-  const conflicts = [];
-
-  for (const path of sourceFiles) {
-    const target = join(destination, path);
-    await assertNoSymlinkPath(repo, target);
-    const currentHash = await exists(target) ? await hashFile(target) : null;
-    const previousHash = previous.files?.[path] ?? null;
-    const desiredHash = desired[path];
-    if (currentHash === desiredHash) actions.push({ action: 'unchanged', path, before_sha256: currentHash, after_sha256: desiredHash });
-    else if (currentHash === null) actions.push({ action: 'create', path, before_sha256: null, after_sha256: desiredHash });
-    else if (previousHash === currentHash) actions.push({ action: 'update', path, before_sha256: currentHash, after_sha256: desiredHash });
-    else conflicts.push({ path, reason: previousHash ? 'managed-file-drift' : 'unmanaged-collision', current_sha256: currentHash, previous_sha256: previousHash, desired_sha256: desiredHash });
+  await assertNoSymlinkPath(repo, manifestPath);
+  const manifestBytes = await readFile(manifestPath).catch((error) => { if (error.code === 'ENOENT') return null; throw error; });
+  const previous = manifestBytes === null ? { schema_version: 'ai-project-bootstrap.install.v1', files: {} } : JSON.parse(manifestBytes);
+  validateManifest(previous);
+  const upstream = new Map();
+  for (const path of await listSourceFiles(sourceRoot)) upstream.set(safeResourcePath(path), await readFile(join(sourceRoot, path)));
+  const desired = Object.fromEntries([...upstream].map(([path, content]) => [path, sha256(content)]));
+  const paths = [...new Set([...Object.keys(desired), ...Object.keys(previous.files), ...Object.keys(previous.schema_version.endsWith('v2') ? previous.local_overrides ?? {} : {})])].sort();
+  for (const path of Object.keys(resolutions)) if (!paths.includes(safeResourcePath(path))) throw new Error(`Resolution does not match a managed resource: ${path}`);
+  const actions = [], conflicts = [], contents = new Map(), reviews = new Map();
+  for (const path of paths) {
+    const local = await resource(repo, destination, path);
+    const incoming = upstream.get(path) ?? null;
+    const currentHash = digest(local), desiredHash = digest(incoming), previousHash = previous.files[path] ?? null;
+    let base = null;
+    if (previousHash && previous.schema_version.endsWith('v2')) {
+      const basePath = join(destination, '.install-base', previousHash);
+      await assertNoSymlinkPath(repo, basePath);
+      base = await readFile(basePath).catch((error) => { if (error.code === 'ENOENT') return null; throw error; });
+      if (base !== null && sha256(base) !== previousHash) throw new Error(`Upstream base snapshot is corrupt: ${path}`);
+    }
+    const metadata = { path, before_sha256: currentHash, previous_sha256: previousHash, upstream_sha256: desiredHash };
+    let action, content = incoming, reason = null, candidate = null;
+    const decision = resolutions[path];
+    if (decision !== undefined) {
+      if (!mapLike(decision) || !['keep-local', 'use-upstream', 'merged-file'].includes(decision.action)) throw new Error(`Invalid resolution: ${path}`);
+      if (decision.action === 'keep-local') { action = 'preserve-local'; content = local; }
+      else if (decision.action === 'use-upstream') action = incoming === null ? 'delete' : 'update';
+      else {
+        if (typeof decision.file !== 'string' || isAbsolute(decision.file) || decision.file.includes('\\') || decision.file.split('/').some((part) => !part || part === '.' || part === '..' || part === '.git' || part.startsWith('.env') || /^(?:credentials?|secrets?|cookies?|tokens?)\.(?:json|ya?ml)$/i.test(part))) throw new Error('Merged file must be repository-relative');
+        const selected = resolve(repo, decision.file);
+        await assertNoSymlinkPath(repo, selected);
+        if (!(await stat(selected)).isFile()) throw new Error('Merged candidate is not a regular file');
+        content = await readFile(selected);
+        if (!utf8(content) || /^(?:<{7} |>{7} |\|{7} )/m.test(content.toString('utf8'))) throw new Error('Merged candidate must be UTF-8 text without conflict markers');
+        action = 'resolved-merge';
+        candidate = content;
+      }
+    } else if (previous.source?.version === 'legacy-project-copy' && Object.hasOwn(previous.files, path) && currentHash !== desiredHash) { action = 'preserve-local'; content = local; }
+    else if (currentHash === desiredHash) action = incoming === null ? 'unchanged-removed' : 'unchanged';
+    else if (previousHash === null && !Object.hasOwn(previous.local_overrides ?? {}, path)) {
+      if (local === null) action = 'create';
+      else reason = 'unmanaged-collision';
+    } else if (currentHash === previousHash) action = incoming === null ? 'delete' : 'update';
+    else if (desiredHash === previousHash || incoming === null) { action = 'preserve-local'; content = local; }
+    else if (local === null) reason = 'local-deletion-upstream-change';
+    else if (base === null) reason = 'missing-upstream-base';
+    else {
+      const merged = await mergeInstalledFile(local, base, incoming);
+      candidate = merged.content;
+      if (merged.clean) { action = 'merge'; content = merged.content; }
+      else reason = merged.reason;
+    }
+    reviews.set(path, { ...metadata, base, local, upstream: incoming, candidate });
+    if (reason) conflicts.push({ ...metadata, reason });
+    else {
+      actions.push({ ...metadata, action, after_sha256: digest(content) });
+      contents.set(path, content);
+    }
   }
-
-  for (const [path, previousHash] of Object.entries(previous.files ?? {}).sort(([a], [b]) => a.localeCompare(b))) {
-    if (desired[path]) continue;
-    const target = join(destination, path);
-    await assertNoSymlinkPath(repo, target);
-    const currentHash = await exists(target) ? await hashFile(target) : null;
-    if (currentHash === null) actions.push({ action: 'unchanged-removed', path, before_sha256: null, after_sha256: null });
-    else if (currentHash === previousHash) actions.push({ action: 'delete', path, before_sha256: currentHash, after_sha256: null });
-    else conflicts.push({ path, reason: 'removed-managed-file-drift', current_sha256: currentHash, previous_sha256: previousHash, desired_sha256: null });
-  }
-
-  const packageJson = await readJson(join(SOURCE_ROOT, 'package.json'), { version: 'unversioned' });
+  const pkg = await readJson(join(sourceRoot, 'package.json'), { version: 'unversioned' });
   const plan = {
-    schema_version: 'ai-project-bootstrap.install-plan.v1',
-    source: { name: 'ai-project-bootstrap', version: packageJson.version },
-    destination: `${repo}/${INSTALL_ROOT}`,
-    actions: actions.sort((a, b) => a.path.localeCompare(b.path)),
-    conflicts: conflicts.sort((a, b) => a.path.localeCompare(b.path)),
+    schema_version: 'ai-project-bootstrap.install-plan.v2',
+    source: { name: 'ai-project-bootstrap', version: pkg.version, tree_sha256: sha256(JSON.stringify(desired)) },
+    destination,
+    manifest_sha256: digest(manifestBytes),
+    resolutions,
+    actions,
+    conflicts,
   };
   plan.plan_hash = sha256(JSON.stringify(plan));
-  return { plan, repo, destination, desired };
+  return { plan, repo, destination, desired, upstream, contents, reviews };
+}
+
+export async function reviewInstallFile(repo, path, options = {}) {
+  const prepared = await createInstallPlan(repo, options);
+  const review = prepared.reviews.get(safeResourcePath(path));
+  if (!review) throw new Error('No such managed resource in the install plan');
+  const result = { path, plan_hash: prepared.plan.plan_hash, action: prepared.plan.actions.find((action) => action.path === path) ?? null, conflict: prepared.plan.conflicts.find((conflict) => conflict.path === path) ?? null };
+  for (const key of ['base', 'local', 'upstream', 'candidate']) result[key] = review[key] === null ? null : utf8(review[key]) ? review[key].toString('utf8') : '[binary content omitted]';
+  return result;
 }
 
 export async function createAdoptionPlan(repoInput) {
@@ -151,47 +234,99 @@ export async function createAdoptionPlan(repoInput) {
   return { plan, destination, files };
 }
 
-async function atomicWrite(path, content) {
+async function atomicWrite(path, content, mode = 0o644) {
   await mkdir(dirname(path), { recursive: true });
-  const temporary = `${path}.tmp-${process.pid}`;
-  await writeFile(temporary, content);
-  await rename(temporary, path);
+  const temporary = `${path}.tmp-${randomUUID()}`;
+  try { await writeFile(temporary, content, { flag: 'wx', mode }); await rename(temporary, path); }
+  finally { await rm(temporary, { force: true }); }
 }
 
-export async function applyInstallPlan(repoInput, expectedPlanHash) {
-  const prepared = await createInstallPlan(repoInput);
-  const { plan, destination, desired } = prepared;
-  if (plan.plan_hash !== expectedPlanHash) throw new Error(`Install plan changed: expected ${expectedPlanHash}, current ${plan.plan_hash}`);
-  if (plan.conflicts.length) throw new Error(`Install conflicts must be resolved first: ${plan.conflicts.map(({ path }) => path).join(', ')}`);
-  for (const action of plan.actions) {
-    const target = join(destination, action.path);
-    if (action.action === 'create' || action.action === 'update') await atomicWrite(target, await readFile(join(SOURCE_ROOT, action.path)));
-    else if (action.action === 'delete') await rm(target);
+export async function applyInstallPlan(repoInput, expectedPlanHash, options = {}) {
+  const initial = await createInstallPlan(repoInput, options);
+  if (initial.plan.plan_hash !== expectedPlanHash) throw new Error(`Install plan changed: expected ${expectedPlanHash}, current ${initial.plan.plan_hash}`);
+  if (initial.plan.conflicts.length) throw new Error(`Install conflicts must be resolved first: ${initial.plan.conflicts.map(({ path }) => path).join(', ')}`);
+  await mkdir(initial.destination, { recursive: true });
+  const lockPath = join(initial.destination, '.install.lock');
+  const lock = await open(lockPath, 'wx', 0o600).catch((error) => { if (error.code === 'EEXIST') throw new Error('Installation is locked; inspect the other installer or stale lock before retrying'); throw error; });
+  const runId = randomUUID();
+  const backupRoot = join(initial.destination, '.install-backups', runId);
+  let started = false, backedUp = false;
+  try {
+    const prepared = await createInstallPlan(repoInput, options);
+    const { plan, destination, desired, upstream, contents } = prepared;
+    if (plan.plan_hash !== expectedPlanHash || plan.conflicts.length) throw new Error('Install plan changed while acquiring lock');
+    // Baselines precede target writes, and remain available after partial failure.
+    for (const [path, content] of upstream) {
+      const basePath = join(destination, '.install-base', desired[path]);
+      await assertNoSymlinkPath(prepared.repo, basePath);
+      await atomicWrite(basePath, content);
+    }
+    const overrides = {};
+    for (const action of plan.actions) {
+      const local = await resource(prepared.repo, destination, action.path);
+      if (digest(local) !== action.before_sha256) throw new Error(`Installed file changed during apply: ${action.path}`);
+      const content = contents.get(action.path);
+      if (action.after_sha256 !== action.upstream_sha256) overrides[action.path] = { sha256: action.after_sha256, upstream_sha256: action.upstream_sha256 };
+      if (action.before_sha256 === action.after_sha256) continue;
+      started = true;
+      if (local !== null) {
+        const backupPath = join(backupRoot, action.path);
+        await assertNoSymlinkPath(prepared.repo, backupPath);
+        await mkdir(dirname(backupPath), { recursive: true, mode: 0o700 });
+        await atomicWrite(backupPath, local, 0o600);
+        backedUp = true;
+      }
+      const target = join(destination, action.path);
+      await assertNoSymlinkPath(prepared.repo, target);
+      if (content === null) await rm(target, { force: true });
+      else await atomicWrite(target, content);
+    }
+    const manifest = { schema_version: 'ai-project-bootstrap.install.v2', source: plan.source, files: desired, local_overrides: overrides };
+    const manifestPath = join(destination, MANIFEST_NAME);
+    await assertNoSymlinkPath(prepared.repo, manifestPath);
+    const currentManifest = await readFile(manifestPath).catch((error) => { if (error.code === 'ENOENT') return null; throw error; });
+    if (digest(currentManifest) !== plan.manifest_sha256) throw new Error('Installation manifest changed during apply');
+    await atomicWrite(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
+    return { ...plan, applied: true, backup_directory: backedUp ? backupRoot : null };
+  } catch (error) {
+    if (started) {
+      const failure = new Error(`Installation may be partial; preserve files and rerun preview. Backups: ${backedUp ? backupRoot : 'none (only new files written)'}. ${error.message}`);
+      failure.partial = true;
+      failure.backup_directory = backedUp ? backupRoot : null;
+      throw failure;
+    }
+    throw error;
+  } finally {
+    await lock.close();
+    await rm(lockPath, { force: true });
   }
-  const manifest = {
-    schema_version: 'ai-project-bootstrap.install.v1',
-    source: plan.source,
-    files: Object.fromEntries(Object.entries(desired).sort(([a], [b]) => a.localeCompare(b))),
-  };
-  await atomicWrite(join(destination, MANIFEST_NAME), `${JSON.stringify(manifest, null, 2)}\n`);
-  return { ...plan, applied: true };
 }
 
 export async function applyAdoptionPlan(repoInput, expectedPlanHash) {
-  const { plan, destination, files } = await createAdoptionPlan(repoInput);
-  if (plan.plan_hash !== expectedPlanHash) throw new Error(`Adoption plan changed: expected ${expectedPlanHash}, current ${plan.plan_hash}`);
-  if (plan.conflicts.length) throw new Error(`Adoption conflicts must be resolved first: ${plan.conflicts.map(({ path }) => path).join(', ')}`);
-  const manifest = { schema_version: 'ai-project-bootstrap.install.v1', source: plan.source, files };
-  await atomicWrite(join(destination, MANIFEST_NAME), `${JSON.stringify(manifest, null, 2)}\n`);
-  return { ...plan, applied: true };
+  const initial = await createAdoptionPlan(repoInput);
+  if (initial.plan.plan_hash !== expectedPlanHash) throw new Error(`Adoption plan changed: expected ${expectedPlanHash}, current ${initial.plan.plan_hash}`);
+  if (initial.plan.conflicts.length) throw new Error('Adoption conflicts must be resolved first');
+  const lockPath = join(initial.destination, '.install.lock');
+  const lock = await open(lockPath, 'wx', 0o600).catch((error) => { if (error.code === 'EEXIST') throw new Error('Installation is locked'); throw error; });
+  try {
+    const { plan, destination, files } = await createAdoptionPlan(repoInput);
+    if (plan.plan_hash !== expectedPlanHash || plan.conflicts.length) throw new Error('Adoption plan changed while acquiring lock');
+    const manifest = { schema_version: 'ai-project-bootstrap.install.v1', source: plan.source, files };
+    await atomicWrite(join(destination, MANIFEST_NAME), `${JSON.stringify(manifest, null, 2)}\n`);
+    return { ...plan, applied: true };
+  } finally {
+    await lock.close();
+    await rm(lockPath, { force: true });
+  }
 }
 
 async function main() {
   const { command, options } = parseArgs(process.argv.slice(2));
-  const result = command === 'preview'
-    ? (await createInstallPlan(options.repo)).plan
+  const installOptions = options.resolutions ? { resolutions: JSON.parse(await readFile(options.resolutions, 'utf8')) } : {};
+  const result = command === 'review' ? await reviewInstallFile(options.repo, options.path, installOptions) : command === 'preview'
+    ? (await createInstallPlan(options.repo, installOptions)).plan
     : command === 'apply'
-      ? await applyInstallPlan(options.repo, options['expected-plan-hash'])
+      ? await applyInstallPlan(options.repo, options['expected-plan-hash'], installOptions)
       : command === 'adopt-preview'
         ? (await createAdoptionPlan(options.repo)).plan
         : await applyAdoptionPlan(options.repo, options['expected-plan-hash']);

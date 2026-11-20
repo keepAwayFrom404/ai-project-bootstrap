@@ -1,6 +1,6 @@
 # Engineering rules
 
-- Treat this repository as the only source for the `ai-project-bootstrap` Skill. Installed project copies are generated distributions, not authoring locations.
+- Treat this repository as the only source for the `ai-project-bootstrap` Skill. Installed copies track project-local adaptations; reusable changes are authored here, while upgrades must preserve target customizations.
 - Preserve the safety boundary: analysis is read-only apart from an explicit output file, project mutations require a reviewed plan, and installation requires a matching preview hash.
 - Keep runtime code dependency-free unless a dependency has a demonstrated cross-project benefit.
 - Add or update tests for behavior, installer, schema, or path-safety changes.

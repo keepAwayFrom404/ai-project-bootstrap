@@ -2,7 +2,7 @@
 
 `ai-project-bootstrap` analyzes a Git repository and helps an Agent establish or reconcile a small, auditable AI-development governance layer without replacing existing project authorities.
 
-The repository root is the canonical Skill source. Copies under a consumer repository's `.agents/skills/ai-project-bootstrap/` are managed installation artifacts.
+The repository root is the canonical Skill source. Copies under a consumer repository's `.agents/skills/ai-project-bootstrap/` are managed installation artifacts with separately tracked project-local customizations.
 
 ## Capabilities
 
@@ -28,7 +28,7 @@ These checks preserve existing project decisions. They do not install/remove wor
 npm run check
 ```
 
-Use Node.js 20 or later and Git. The runtime, tests and repository Skill validator use only Node.js built-ins; `npm run check` requires no global Agent installation, Python or dependency installation. The validator checks this repository's simple frontmatter profile and local reference files, not full YAML or live host compatibility. See [contributing](CONTRIBUTING.md) for focused commands and limits.
+Use Node.js 20 or later and Git. Node code uses only built-ins; customized three-way upgrades also invoke the already-required Git executable. `npm run check` requires no global Agent installation, Python or dependency installation. The validator checks this repository's simple frontmatter profile and local reference files, not full YAML or live host compatibility. See [contributing](CONTRIBUTING.md) for focused commands and limits.
 
 ## Install into a project
 
@@ -39,7 +39,7 @@ node scripts/install.mjs preview --repo /absolute/path/to/project
 node scripts/install.mjs apply --repo /absolute/path/to/project --expected-plan-hash <hash-from-preview>
 ```
 
-The installer writes only `.agents/skills/ai-project-bootstrap/`. It records managed hashes in `.install-manifest.json`, refuses unowned collisions, and blocks updates when an installed file has local drift. Run `preview` again whenever the source or target changes.
+The installer writes only `.agents/skills/ai-project-bootstrap/`. It records upstream bases and actual customization hashes in `.install-manifest.json`, refuses unowned collisions, preserves local-only edits/deletions and proposes three-way merges for simultaneous changes. Overlapping edits and missing historical bases block apply until reviewed. Run `preview` again whenever the source or target changes.
 
 For a legacy project that already contains a complete project-level copy from before independent distribution, first adopt it without changing content, then run the normal upgrade:
 
@@ -54,6 +54,32 @@ Adoption is intentionally unavailable after an installation manifest exists and 
 After installation, invoke `$ai-project-bootstrap` in the target project. The Skill itself will analyze and preview governance changes; installing the Skill does not authorize those changes.
 
 For an already initialized project, upgrading the installed Skill does not reformat code or modify project dependencies. Invoke `$ai-project-bootstrap` again: the existing manifest selects `re-audit`, which evaluates newly supported concerns such as formatting and requires an explicit decision before dependency, build-file, formatter-config, or repository-wide formatting changes.
+
+## Review customized upgrades
+
+Preview remains read-only in the target repository. For a customized file, inspect its base/local/upstream versions and proposed merge:
+
+```sh
+node scripts/install.mjs review --repo /absolute/path/to/project --path SKILL.md
+```
+
+If automatic merging cannot preserve both versions, prepare a resolution JSON file. `keep-local` retains the current bytes/deletion, `use-upstream` explicitly replaces/removes them, and `merged-file` uses a reviewed UTF-8 file inside the target repository. Re-preview and apply with the **same** resolution file and new hash:
+
+```sh
+node scripts/install.mjs preview --repo /absolute/path/to/project --resolutions /path/to/resolutions.json
+node scripts/install.mjs apply --repo /absolute/path/to/project --resolutions /path/to/resolutions.json --expected-plan-hash <new-hash>
+```
+
+Resolution example:
+
+```json
+{
+  "SKILL.md": { "action": "keep-local" },
+  "references/governance-skeleton.md": { "action": "merged-file", "file": "upgrade/reviewed-skeleton.md" }
+}
+```
+
+Only include decisions for resources shown in the preview. Review output contains installed source text; do not publish it if local customizations contain private material. See [upgrade safety and recovery](docs/installation-upgrades.md) for v1 compatibility, backups, conflicts and limits. Project-specific adaptations may stay local; generally reusable fixes belong in the canonical source.
 
 ## Development boundary
 

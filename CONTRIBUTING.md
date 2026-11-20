@@ -21,7 +21,7 @@ The local Skill validator deliberately checks this repository's two plain, singl
 - Preserve existing user-owned project rules; never turn an installed tool into an implicit project requirement.
 - Keep analysis read-only except for its explicit report. Project edits and installation retain their reviewed/hash-bound protocols.
 - Add failure/boundary tests for changed behavior. Do not mix unrelated reformatting with a feature.
-- Change the canonical Skill source here; do not edit a consumer's managed copy as the long-term source.
+- Change the canonical Skill source here; keep project-local adaptations distinguishable from reusable upstream changes.
 - Do not include credentials, personal machine paths, user data, generated caches or private target repositories. Use synthetic fixtures and repository-relative examples.
 
 ## Reporting issues
@@ -30,7 +30,7 @@ Include the relevant commit, Node/OS versions, minimal synthetic fixture, comman
 
 ## Compatibility and releases
 
-The current 0.1.x work is early and may evolve. Preserve evidence fields when possible; document schema or installer behavior changes and migration implications. Maintainers review a clean candidate and CI results before tagging a version. Tags describe source versions; installing/upgrading still uses preview/apply and must not overwrite local drift. npm publication is not part of the current release path.
+The current 0.1.x work is early and may evolve. Preserve evidence fields when possible; document schema or installer behavior changes and migration implications. Maintainers review a clean candidate and CI results before tagging a version. Tags describe source versions; installing/upgrading still uses preview/apply and must preserve or explicitly reconcile local changes. npm publication is not part of the current release path.
 
 ## License
 

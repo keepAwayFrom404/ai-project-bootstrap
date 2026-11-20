@@ -24,7 +24,7 @@ test('preview is read-only and apply requires the exact current plan hash', asyn
   assert.match(await readFile(join(repo, '.agents/skills/ai-project-bootstrap/SKILL.md'), 'utf8'), /name: ai-project-bootstrap/);
 });
 
-test('reinstall is idempotent and local drift blocks updates', async (t) => {
+test('reinstall is idempotent and local-only customization is preserved', async (t) => {
   const repo = await targetRepo(t);
   const first = await createInstallPlan(repo);
   await applyInstallPlan(repo, first.plan.plan_hash);
@@ -35,8 +35,11 @@ test('reinstall is idempotent and local drift blocks updates', async (t) => {
   const skillPath = join(repo, '.agents/skills/ai-project-bootstrap/SKILL.md');
   await writeFile(skillPath, `${await readFile(skillPath, 'utf8')}\nlocal edit\n`);
   const drift = await createInstallPlan(repo);
-  assert.deepEqual(drift.plan.conflicts.map(({ reason }) => reason), ['managed-file-drift']);
-  await assert.rejects(() => applyInstallPlan(repo, drift.plan.plan_hash), /conflicts must be resolved/);
+  assert.equal(drift.plan.conflicts.length, 0);
+  assert.equal(drift.plan.actions.find(({ path }) => path === 'SKILL.md').action, 'preserve-local');
+  await applyInstallPlan(repo, drift.plan.plan_hash);
+  assert.match(await readFile(skillPath, 'utf8'), /local edit/);
+
 });
 
 test('unmanaged collisions are never overwritten', async (t) => {
@@ -79,4 +82,25 @@ test('managed distribution retains the MIT notice with copied Skill resources', 
   const notice = await readFile(join(repo, '.agents/skills/ai-project-bootstrap/LICENSE'), 'utf8');
   assert.equal(notice, await readFile(new URL('../LICENSE', import.meta.url), 'utf8'));
   assert.match(notice, /MIT License/);
+});
+
+
+test('adopting an unknown historical customization never authorizes overwriting it on first upgrade', async (t) => {
+  const repo = await targetRepo(t);
+  const destination = join(repo, '.agents/skills/ai-project-bootstrap');
+  const original = await createInstallPlan(repo);
+  for (const action of original.plan.actions) {
+    const target = join(destination, action.path);
+    await mkdir(join(target, '..'), { recursive: true });
+    await writeFile(target, await readFile(new URL('../' + action.path, import.meta.url)));
+  }
+  const skill = join(destination, 'SKILL.md');
+  const customized = (await readFile(skill, 'utf8')) + '\nHuman customization\n';
+  await writeFile(skill, customized);
+  const adoption = await createAdoptionPlan(repo);
+  await applyAdoptionPlan(repo, adoption.plan.plan_hash);
+  const upgrade = await createInstallPlan(repo);
+  assert.equal(upgrade.plan.actions.find(({ path }) => path === 'SKILL.md').action, 'preserve-local');
+  await applyInstallPlan(repo, upgrade.plan.plan_hash);
+  assert.equal(await readFile(skill, 'utf8'), customized);
 });
