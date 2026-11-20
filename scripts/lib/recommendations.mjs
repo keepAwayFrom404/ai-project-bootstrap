@@ -24,6 +24,12 @@ const PACKS = [
     applies: ({ coverage }) => coverage.has('readable-code-boundaries'), trigger: ['source-or-agent-guidance'],
   },
   {
+    pack_id: 'code-style-formatting', version: 1, concern: 'code-style-formatting',
+    reference_path: 'references/packs/code-style-formatting.md',
+    sources: ['https://github.com/biomejs/biome', 'https://github.com/prettier/prettier', 'https://github.com/diffplug/spotless', 'https://github.com/astral-sh/ruff'],
+    applies: ({ coverage }) => coverage.has('code-style-formatting'), trigger: ['source-code'],
+  },
+  {
     pack_id: 'frontend-react-typescript', version: 1, concern: 'frontend-engineering',
     reference_path: 'references/packs/frontend-react-typescript.md',
     sources: ['https://github.com/google/gts', 'https://github.com/google/styleguide/blob/gh-pages/tsguide.html'],
@@ -67,20 +73,29 @@ export function buildRecommendations({ analyzers = {} } = {}) {
   const dependencies = new Set(stack.filter(({ kind }) => kind === 'dependency').map(({ value }) => value));
   const runtimes = new Set(stack.filter(({ kind }) => kind === 'runtime').map(({ value }) => value));
   const coverage = new Map((analyzers.governanceCoverage ?? []).map((item) => [item.concern, item]));
-  const signals = { coverage, dependencies, runtimes };
+  const formatting = analyzers.formatting ?? [];
+  const signals = { coverage, dependencies, formatting, runtimes };
 
   return PACKS.filter((pack) => pack.applies(signals)).map((pack) => {
     const current = coverage.get(pack.concern);
-    const disposition = current?.value === 'covered' ? 'compare-only' : current?.value === 'partial' ? 'propose-adjust' : 'propose-create';
+    const executableGaps = pack.pack_id === 'code-style-formatting'
+      ? [
+          formatting.some(({ kind }) => kind === 'formatter-dependency' || kind === 'format-check-command' || kind === 'format-write-command') ? null : 'executable-formatter',
+          formatting.some(({ kind }) => kind === 'format-check-command') ? null : 'executable-check-command',
+          formatting.some(({ kind }) => kind === 'format-command-unresolved') ? 'unresolved-format-command' : null,
+        ].filter(Boolean)
+      : [];
+    const effectiveStatus = current?.value === 'covered' && executableGaps.length ? 'partial' : current?.value;
+    const disposition = effectiveStatus === 'covered' ? 'compare-only' : effectiveStatus === 'partial' ? 'propose-adjust' : 'propose-create';
     return {
       pack_id: pack.pack_id,
       version: pack.version,
       concern: pack.concern,
       disposition,
       trigger_evidence: pack.trigger,
-      current_status: current?.value ?? 'missing',
+      current_status: effectiveStatus ?? 'missing',
       authority_path: current?.authority_path ?? null,
-      missing_topics: current?.missing_topics ?? [],
+      missing_topics: [...new Set([...(current?.missing_topics ?? []), ...executableGaps])].sort(),
       reference_path: pack.reference_path,
       sources: [...pack.sources].sort(),
       requires_user_confirmation: disposition !== 'compare-only',

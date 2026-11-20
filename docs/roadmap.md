@@ -15,7 +15,7 @@ This is a direction for ongoing work, not a promise that unfinished capabilities
 3. Make scanner scope/budgets explainable for large repositories with build/output copies, without weakening privacy or path safety.
 4. Collect synthetic examples across languages and existing project structures; improve heuristic precision from observed failures.
 
-Formatter support is being developed locally and is not part of the currently published baseline until reviewed and committed. New concerns must reuse the current pipeline rather than adding a mandatory workflow runtime.
+Selected formatter configuration and command recognition is included in the baseline; deeper cross-language command/inheritance resolution remains future work. New concerns must reuse the current pipeline rather than adding a mandatory workflow runtime.
 
 ## Release discipline
 

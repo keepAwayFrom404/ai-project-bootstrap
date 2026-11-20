@@ -4,6 +4,7 @@ import { resolveRepositoryRoot, walkRepository } from './filesystem.mjs';
 import { analyze as inventory } from './analyzers/inventory.mjs';
 import { analyze as stack } from './analyzers/stack.mjs';
 import { analyze as commands } from './analyzers/commands.mjs';
+import { analyze as formatting } from './analyzers/formatting.mjs';
 import { analyze as guidance } from './analyzers/guidance.mjs';
 import { analyze as standards } from './analyzers/standards.mjs';
 import { analyze as quality } from './analyzers/quality.mjs';
@@ -13,7 +14,7 @@ import { analyze as tooling } from './analyzers/tooling.mjs';
 import { analyze as governanceCoverage } from './analyzers/governance-coverage.mjs';
 import { buildRecommendations } from './recommendations.mjs';
 
-const ANALYZERS = { commands, git, governanceCoverage, guidance, inventory, quality, stack, standards, tooling, workflow };
+const ANALYZERS = { commands, formatting, git, governanceCoverage, guidance, inventory, quality, stack, standards, tooling, workflow };
 
 function stable(items) {
   return [...items].sort((a, b) => [a.source_path, a.kind, String(a.value)].join('\0').localeCompare([b.source_path, b.kind, String(b.value)].join('\0')));
@@ -41,7 +42,7 @@ export async function analyzeRepository({ repo, limits } = {}) {
 }
 
 export function assessMode({ analyzers = {}, warnings = [], file_paths = [] } = {}) {
-  const blocking = warnings.some(({ kind, analyzer }) => kind === 'scan-limit' || (kind === 'analyzer-error' && ['governanceCoverage', 'inventory', 'guidance', 'standards', 'tooling'].includes(analyzer)));
+  const blocking = warnings.some(({ kind, analyzer }) => kind === 'scan-limit' || (kind === 'analyzer-error' && ['governanceCoverage', 'inventory', 'guidance', 'standards', 'tooling', 'formatting'].includes(analyzer)));
   if (blocking) return { recommended_mode: 'consult-user', confidence: 'candidate', basis: ['repository evidence is incomplete'], requires_user_confirmation: true };
   if (file_paths.includes('.ai-project-bootstrap/manifest.yaml')) return { recommended_mode: 're-audit', confidence: 'confirmed', basis: ['.ai-project-bootstrap/manifest.yaml exists'], requires_user_confirmation: false };
   const sources = [...(analyzers.guidance ?? []), ...(analyzers.standards ?? [])].map(({ source_path }) => source_path);

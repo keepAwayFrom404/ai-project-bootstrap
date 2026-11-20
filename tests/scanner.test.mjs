@@ -15,7 +15,7 @@ test('analyzeRepository emits sourced stable evidence without sensitive values',
   const evidence = await scanner.analyzeRepository({ repo: repo.root });
   assert.equal(evidence.schema_version, 'ai-project-bootstrap.evidence.v1');
   assert.equal(evidence.mode_assessment.recommended_mode, 'legacy-reconciliation');
-  assert.deepEqual(Object.keys(evidence.analyzers), ['commands', 'git', 'governanceCoverage', 'guidance', 'inventory', 'quality', 'stack', 'standards', 'tooling', 'workflow']);
+  assert.deepEqual(Object.keys(evidence.analyzers), ['commands', 'formatting', 'git', 'governanceCoverage', 'guidance', 'inventory', 'quality', 'stack', 'standards', 'tooling', 'workflow']);
   assert.ok(evidence.analyzers.stack.some((item) => item.kind === 'package-manager' && item.value === 'pnpm'));
   assert.ok(evidence.analyzers.stack.some((item) => item.kind === 'runtime' && item.source_path === 'packages/core/package.json'));
   assert.ok(evidence.analyzers.commands.some((item) => item.kind === 'quality-command' && item.value === 'npm test'));
@@ -56,6 +56,74 @@ test('quality commands include executable scripts from nested package manifests'
     'npm --prefix apps/web run build',
     'npm --prefix apps/web run test',
   ]);
+});
+
+test('formatting analyzer reports existing tools, configs and non-mutating check commands', async (t) => {
+  const fixture = await createRepoFixture({ files: {
+    '.editorconfig': 'root = true\n',
+    'package.json': JSON.stringify({
+      devDependencies: { prettier: '^3.0.0' },
+      scripts: { format: 'prettier --write .', 'format:check': 'prettier --check .' },
+    }),
+    'apps/web/biome.json': '{"formatter":{"enabled":true}}\n',
+    'apps/web/package.json': JSON.stringify({
+      devDependencies: { '@biomejs/biome': '^2.0.0' },
+      scripts: { 'format:check': 'biome format .', lint: 'biome lint .' },
+    }),
+  } });
+  t.after(() => fixture.cleanup());
+  const result = await scanner.analyzeRepository({ repo: fixture.root });
+  assert.deepEqual(result.analyzers.formatting.map(({ kind, value, source_path }) => ({ kind, value, source_path })), [
+    { kind: 'editor-style-config', value: 'editorconfig', source_path: '.editorconfig' },
+    { kind: 'formatter-config', value: 'biome', source_path: 'apps/web/biome.json' },
+    { kind: 'format-check-command', value: 'npm --prefix apps/web run format:check', source_path: 'apps/web/package.json' },
+    { kind: 'formatter-dependency', value: '@biomejs/biome', source_path: 'apps/web/package.json' },
+    { kind: 'format-check-command', value: 'npm run format:check', source_path: 'package.json' },
+    { kind: 'format-write-command', value: 'npm run format', source_path: 'package.json' },
+    { kind: 'formatter-dependency', value: 'prettier', source_path: 'package.json' },
+  ]);
+  assert.ok(result.analyzers.commands.some(({ value }) => value === 'npm run format:check'));
+  assert.ok(!result.analyzers.commands.some(({ value }) => value === 'npm run format'));
+});
+
+test('formatting prose without executable tooling remains an adjustment recommendation', async (t) => {
+  const fixture = await createRepoFixture({ files: {
+    'package.json': JSON.stringify({ devDependencies: { typescript: '^5.0.0' } }),
+    'src/index.ts': 'export const value=1\n',
+    'docs/agent/README.md': '# Registry\n| concern | authoritative path | scope | owner |\n| --- | --- | --- | --- |\n| Code formatting | docs/agent/formatting.md | repo | team |\n',
+    'docs/agent/formatting.md': '# Formatting\nUse Prettier. Run format and format:check. Ignore generated files. CI runs format:check before completion.\n',
+  } });
+  t.after(() => fixture.cleanup());
+  const evidence = await scanner.analyzeRepository({ repo: fixture.root });
+  const coverage = evidence.analyzers.governanceCoverage.find(({ concern }) => concern === 'code-style-formatting');
+  assert.equal(coverage.value, 'covered');
+  const recommendation = evidence.recommendations.find(({ pack_id }) => pack_id === 'code-style-formatting');
+  assert.equal(recommendation.current_status, 'partial');
+  assert.equal(recommendation.disposition, 'propose-adjust');
+  assert.ok(recommendation.missing_topics.includes('executable-formatter'));
+  assert.ok(recommendation.missing_topics.includes('executable-check-command'));
+});
+
+test('formatting recommendation is emitted for new and initialized projects without silently authorizing mutation', async (t) => {
+  const fresh = await createRepoFixture({ files: {
+    'package.json': JSON.stringify({ devDependencies: { typescript: '^5.0.0' } }),
+    'src/index.ts': 'export const value=1\n',
+  } });
+  const historical = await createRepoFixture({ files: {
+    '.ai-project-bootstrap/manifest.yaml': '{"schema_version":"ai-project-bootstrap.manifest.v1"}\n',
+    'package.json': JSON.stringify({ devDependencies: { typescript: '^5.0.0' } }),
+    'src/index.ts': 'export const value=1\n',
+  } });
+  t.after(() => fresh.cleanup());
+  t.after(() => historical.cleanup());
+  for (const [repo, mode] of [[fresh, 'new-project'], [historical, 're-audit']]) {
+    const evidence = await scanner.analyzeRepository({ repo: repo.root });
+    assert.equal(evidence.mode_assessment.recommended_mode, mode);
+    const recommendation = evidence.recommendations.find(({ pack_id }) => pack_id === 'code-style-formatting');
+    assert.equal(recommendation.disposition, 'propose-create');
+    assert.equal(recommendation.requires_user_confirmation, true);
+    assert.ok(recommendation.missing_topics.includes('automated-formatter'));
+  }
 });
 
 test('recommendation packs are stack-gated and never authorize implicit mutation', async (t) => {

@@ -11,6 +11,7 @@ The repository root is the canonical Skill source. Copies under a consumer repos
 - Preserves human-owned guidance and stops on authority conflicts or drift.
 - Validates the core governance registry and managed manifest.
 - Offers stack-gated recommendations without silently adopting them.
+- Detects selected formatter configuration and recognized command bodies, and proposes a stack-compatible executable baseline when formatting governance is missing.
 - Keeps evidence and plan-hash mechanics internal for safe, unambiguous initialization; users are interrupted only for real conflicts or decisions.
 
 It does not replace feature-development workflows, OpenSpec/Comet, `ai-dev-grow`, AgentMemory, CodeGraph, tests, or CI.
@@ -51,6 +52,8 @@ node scripts/install.mjs preview --repo /absolute/path/to/project
 Adoption is intentionally unavailable after an installation manifest exists and refuses incomplete copies.
 
 After installation, invoke `$ai-project-bootstrap` in the target project. The Skill itself will analyze and preview governance changes; installing the Skill does not authorize those changes.
+
+For an already initialized project, upgrading the installed Skill does not reformat code or modify project dependencies. Invoke `$ai-project-bootstrap` again: the existing manifest selects `re-audit`, which evaluates newly supported concerns such as formatting and requires an explicit decision before dependency, build-file, formatter-config, or repository-wide formatting changes.
 
 ## Development boundary
 

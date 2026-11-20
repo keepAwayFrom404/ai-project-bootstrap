@@ -31,6 +31,14 @@ The manifest establishes ownership only for distributed Skill files. It never gr
 - Local edits to an installed copy are treated as conflicts; move deliberate changes back to this repository first.
 - Rollback by checking out the intended source version, previewing, and applying it. The same drift rules apply.
 
+An installation upgrade changes only the managed Skill copy. It does not execute project reconciliation. When the upgraded Skill is invoked in a repository with an existing bootstrap manifest, `re-audit` evaluates new analyzers and recommendation packs. Existing formatter configuration wins; dependency changes, build-file changes, and repository-wide formatting require an accepted project Change Plan.
+
 ## Rejected default: Git submodule
 
 A submodule preserves source identity but introduces nested Git lifecycle, checkout, authentication, and CI requirements into every consumer. Managed copies keep discovery simple while retaining deterministic provenance and drift detection.
+
+## Formatting evidence
+
+Formatter detection is read-only static analysis. Command classification inspects bounded recognized CLI forms rather than trusting names such as format:check; write flags, shell composition, dynamic expressions and lifecycle hooks cannot be promoted into read-only formatting gates. Unknown forms remain unresolved for review. EditorConfig and lint-only settings are separate from formatter evidence. Analyzer failure marks the evidence incomplete.
+
+Recommendations require both documented governance and recognized executable declarations before becoming compare-only. This does not certify installed binaries, command success, workspace-wide coverage, configuration inheritance, or arbitrary shell safety. Existing project configuration is preserved, and any dependency/build/reformatting change still requires the accepted Change Plan.

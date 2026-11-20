@@ -6,6 +6,18 @@ const MAX_DOCUMENT_BYTES = 256 * 1024;
 const CONCERNS = [
   ...FOUNDATION_CONCERNS,
   {
+    id: 'code-style-formatting',
+    aliases: /code style|formatting|formatter|代码格式|格式化规范/i,
+    expected: ({ paths }) => paths.some((path) => /\.(?:c|cc|cpp|cs|go|java|[cm]?[jt]sx?|kt|kts|php|py|rs|vue)$/.test(path)),
+    topics: [
+      ['automated-formatter', /Prettier|Biome|Spotless|google-java-format|Ruff format|Black|gofmt|rustfmt|自动格式化|formatter/i],
+      ['write-command', /format(?::write)?|格式化命令/i],
+      ['check-command', /format:check|check:format|格式检查/i],
+      ['generated-files', /generated files?|generated code|生成文件|生成代码|format.*ignore|忽略.*格式/i],
+      ['delivery-gate', /CI|交付.*检查|提交前.*检查|before completion|完成前.*(?:format|格式)/i],
+    ],
+  },
+  {
     id: 'frontend-engineering',
     aliases: /front[- ]?end|frontend|前端工程|前端规范/i,
     expected: ({ dependencies, paths }) => dependencies.has('react') || paths.some((path) => /^web\/src\/.+\.(?:ts|tsx)$/.test(path)),
