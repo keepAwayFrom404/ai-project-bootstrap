@@ -27,7 +27,7 @@ These checks preserve existing project decisions. They do not install/remove wor
 npm run check
 ```
 
-The Skill runtime and its tests use only Node.js built-ins. `validate:skill` resolves the Codex `skill-creator` validator from `CODEX_HOME`, falling back to `~/.codex`.
+Use Node.js 20 or later and Git. The runtime, tests and repository Skill validator use only Node.js built-ins; `npm run check` requires no global Agent installation, Python or dependency installation. The validator checks this repository's simple frontmatter profile and local reference files, not full YAML or live host compatibility. See [contributing](CONTRIBUTING.md) for focused commands and limits.
 
 ## Install into a project
 
@@ -58,3 +58,7 @@ Shopee Utils was the first pilot and remains a consumer/validation case. Its `.a
 
 See [docs/architecture.md](docs/architecture.md) for source, installation, and upgrade boundaries.
 The original pilot lineage is recorded in [docs/provenance.md](docs/provenance.md).
+
+## Open-source maintenance
+
+Licensed under [MIT](LICENSE). Contributions and reproducible issues are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md) and the [maintenance roadmap](docs/roadmap.md). CI is configured for Node 20/24; the workflow definition is not a claim that a remote run has passed.

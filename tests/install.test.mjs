@@ -69,3 +69,14 @@ test('legacy project copies require hash-bound adoption before upgrade', async (
   assert.equal(managed.plan.conflicts.length, 0);
   assert.ok(managed.plan.actions.every(({ action }) => action === 'unchanged'));
 });
+
+
+test('managed distribution retains the MIT notice with copied Skill resources', async (t) => {
+  const repo = await targetRepo(t);
+  const { plan } = await createInstallPlan(repo);
+  assert.ok(plan.actions.some(({ path }) => path === 'LICENSE'));
+  await applyInstallPlan(repo, plan.plan_hash);
+  const notice = await readFile(join(repo, '.agents/skills/ai-project-bootstrap/LICENSE'), 'utf8');
+  assert.equal(notice, await readFile(new URL('../LICENSE', import.meta.url), 'utf8'));
+  assert.match(notice, /MIT License/);
+});

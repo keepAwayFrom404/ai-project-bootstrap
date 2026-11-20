@@ -8,7 +8,7 @@ import { fileURLToPath } from 'node:url';
 const SOURCE_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const INSTALL_ROOT = '.agents/skills/ai-project-bootstrap';
 const MANIFEST_NAME = '.install-manifest.json';
-const INCLUDED_ROOTS = ['SKILL.md', 'agents', 'references', 'scripts'];
+const INCLUDED_ROOTS = ['SKILL.md', 'LICENSE', 'agents', 'references', 'scripts'];
 const EXCLUDED_SOURCE_FILES = new Set([`scripts/${basename(fileURLToPath(import.meta.url))}`]);
 
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');

@@ -1,6 +1,6 @@
 # Provenance
 
-The Skill was developed and behavior-tested in `/Users/didi/shopee-utils` before becoming an independent repository.
+The Skill was developed and behavior-tested in the private Shopee Utils pilot repository before becoming an independent repository.
 
 Key source milestones:
 
