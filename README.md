@@ -1,47 +1,97 @@
 # ai-project-bootstrap
 
-`ai-project-bootstrap` analyzes a Git repository and helps an Agent establish or reconcile a small, auditable AI-development governance layer without replacing existing project authorities.
+English | [简体中文](README.zh-CN.md)
 
-The repository root is the canonical Skill source. Copies under a consumer repository's `.agents/skills/ai-project-bootstrap/` are managed installation artifacts with separately tracked project-local customizations.
+**Give coding agents clear project rules, without overwriting the way your team works.**
 
-## Capabilities
+`ai-project-bootstrap` is a reusable Skill for establishing and maintaining AI-development guidance in Git repositories. It inspects the existing codebase, tools and documents, then helps an agent identify gaps and propose scoped changes: what to read, where code belongs, how to verify it, and which source owns each rule.
 
-- Classifies new projects, legacy repositories, and initialized repositories.
-- Produces evidence and a deterministic Change Plan before project edits.
-- Preserves human-owned guidance and stops on authority conflicts or drift.
-- Validates the core governance registry and managed manifest.
-- Offers stack-gated recommendations without silently adopting them.
-- Detects selected formatter configuration and recognized command bodies, and proposes a stack-compatible executable baseline when formatting governance is missing.
-- Keeps evidence and plan-hash mechanics internal for safe, unambiguous initialization; users are interrupted only for real conflicts or decisions.
+It works with new projects and existing repositories. Existing project decisions and human edits stay in control; recommendations are reviewed before adoption.
 
-It does not replace feature-development workflows, OpenSpec/Comet, `ai-dev-grow`, AgentMemory, CodeGraph, tests, or CI.
+## When to use it
 
-## Portable initialization foundations
+- Start a project with a small, understandable set of AI coding instructions.
+- Reconcile scattered or conflicting guidance in an existing repository.
+- Add missing engineering rules as a project grows beyond its initial frontend or prototype.
+- Share project guidance across developers without making someone's personal workflow tools a team prerequisite.
+- Upgrade the installed Skill while preserving project-local customizations.
 
-Analyze reports four advisory concerns: progressive loading, tool independence, incremental verification, and readable code/module boundaries. Matching packs provide adaptable rules; `tooling` reports bounded command/path references from instructions, project Skills/Hooks and development scripts without executing them or reproducing source-line values.
+## What it provides
 
-These checks preserve existing project decisions. They do not install/remove workflows, generate automatic compliance guarantees, or force a pilot's framework, file size or worker count. See [generation guidance](references/initialization-foundations.md). Setup and troubleshooting stay on demand; local validation targets the scoped change and affected dependencies while preserving CI gates.
+| Capability | What it does |
+| --- | --- |
+| Evidence before changes | Inspects repository files and declarations; analysis writes only its explicitly requested report. |
+| Clear ownership | Registers one authority per concern and preserves existing project documents. |
+| Progressive loading | Keeps essential instructions small and routes setup, domain rules and troubleshooting by task. |
+| Portable guidance | Reports selected personal-tool references for review, without automatically installing or adopting workflows. |
+| Incremental verification | Starts with changed behavior and affected consumers, reuses valid results and preserves CI gates. |
+| Readable code and boundaries | Recommends meaningful names, cohesive responsibilities, explicit side effects and dependency direction. |
+| Formatting governance | Recognizes selected formatter declarations and command bodies, separating checks from writes and unresolved wrappers. |
+| Managed upgrades | Tracks upstream bases and local customizations, proposes three-way merges and blocks unresolved conflicts. |
 
-## Verify the source
+The Skill guides an agent; it does not automatically rewrite a project or replace its development workflow. Topic coverage is heuristic evidence, not proof of code quality, safe execution or compatibility with every agent host. See [architecture and limits](docs/architecture.md).
+
+## Quick start
+
+Requirements: **Node.js 20+**, **Git**, and an agent that can read Skill instructions. Node code uses built-in modules; no npm dependencies, Python or global workflow CLI are required. Three-way upgrade merges use Git.
+
+Clone this source repository:
 
 ```sh
-npm run check
+git clone https://github.com/keepAwayFrom404/ai-project-bootstrap.git
+cd ai-project-bootstrap
 ```
 
-Use Node.js 20 or later and Git. Node code uses only built-ins; customized three-way upgrades also invoke the already-required Git executable. `npm run check` requires no global Agent installation, Python or dependency installation. The validator checks this repository's simple frontmatter profile and local reference files, not full YAML or live host compatibility. See [contributing](CONTRIBUTING.md) for focused commands and limits.
-
-## Install into a project
-
-The target must be an existing Git repository. Installation is deliberately two-step.
+Install into an existing Git project in two steps:
 
 ```sh
 node scripts/install.mjs preview --repo /absolute/path/to/project
 node scripts/install.mjs apply --repo /absolute/path/to/project --expected-plan-hash <hash-from-preview>
 ```
 
-The installer writes only `.agents/skills/ai-project-bootstrap/`. It records upstream bases and actual customization hashes in `.install-manifest.json`, refuses unowned collisions, preserves local-only edits/deletions and proposes three-way merges for simultaneous changes. Overlapping edits and missing historical bases block apply until reviewed. Run `preview` again whenever the source or target changes.
+Review the preview before applying. Changes to upstream resources, managed files, installation records or chosen resolutions invalidate the old hash; run `preview` again.
 
-For a legacy project that already contains a complete project-level copy from before independent distribution, first adopt it without changing content, then run the normal upgrade:
+The installer writes only `.agents/skills/ai-project-bootstrap/` in the target repository. Installing the Skill does not authorize changes to the project's rules or code.
+
+In an agent that supports project Skills, invoke:
+
+```text
+$ai-project-bootstrap
+```
+
+If your agent does not discover the Skill automatically, ask it to read `.agents/skills/ai-project-bootstrap/SKILL.md` in the target project. This is an explicit reading path, not a claim of native integration with that host.
+
+## How initialization works
+
+1. **Inspect** the current repository, existing guidance, tools and commands.
+2. **Assess** missing rules and actual authority conflicts, with evidence and known limits.
+3. **Propose** changes that reuse the project's existing structure and reviewed decisions.
+4. **Apply** the accepted scope and verify the resulting files and relevant checks.
+
+For a new project, the default core is an `AGENTS.md` entrypoint, a small engineering baseline, an authority Registry and a managed manifest. Detailed documents are added only when the project needs them. Valid existing paths remain in place.
+
+For an initialized project, run the Skill again to re-audit current evidence. Upgrading the Skill alone does not install formatter dependencies, reformat business code or activate a new workflow. See [initialization foundations](references/initialization-foundations.md).
+
+## Upgrades and local customizations
+
+After updating this source checkout to the version you want, use the same `preview` / `apply` commands. Local-only edits and deletions are preserved. Simultaneous upstream and local changes produce a three-way merge candidate when a verified base is available; overlapping changes or missing bases require review.
+
+Inspect a particular file:
+
+```sh
+node scripts/install.mjs review --repo /absolute/path/to/project --path SKILL.md
+```
+
+Resolve conflicts per file with `keep-local`, `use-upstream` or a reviewed `merged-file`. Re-preview and apply using the same resolution file and the new plan hash:
+
+```sh
+node scripts/install.mjs preview --repo /absolute/path/to/project --resolutions /path/to/resolutions.json
+node scripts/install.mjs apply --repo /absolute/path/to/project --resolutions /path/to/resolutions.json --expected-plan-hash <new-hash>
+```
+
+Review output can contain private local source. Existing replaced files are backed up, and the manifest is written last; installation is not an all-or-nothing multi-file transaction. Read [upgrade decisions, v1 compatibility and recovery](docs/installation-upgrades.md) before resolving an upgrade conflict.
+
+A complete legacy copy without an installation manifest can use metadata-only adoption first:
 
 ```sh
 node scripts/install.mjs adopt-preview --repo /absolute/path/to/project
@@ -49,45 +99,22 @@ node scripts/install.mjs adopt-apply --repo /absolute/path/to/project --expected
 node scripts/install.mjs preview --repo /absolute/path/to/project
 ```
 
-Adoption is intentionally unavailable after an installation manifest exists and refuses incomplete copies.
+Adoption refuses incomplete copies. The first normal upgrade preserves differences from an unknown legacy upstream as local customizations.
 
-After installation, invoke `$ai-project-bootstrap` in the target project. The Skill itself will analyze and preview governance changes; installing the Skill does not authorize those changes.
+## Contributing and verification
 
-For an already initialized project, upgrading the installed Skill does not reformat code or modify project dependencies. Invoke `$ai-project-bootstrap` again: the existing manifest selects `re-audit`, which evaluates newly supported concerns such as formatting and requires an explicit decision before dependency, build-file, formatter-config, or repository-wide formatting changes.
+This repository is the canonical source for reusable improvements. Consumer projects own their governance results and local adaptations.
 
-## Review customized upgrades
-
-Preview remains read-only in the target repository. For a customized file, inspect its base/local/upstream versions and proposed merge:
+Choose focused tests for your change and its consumers; use the [contribution guide](CONTRIBUTING.md) for commands and expectations. The complete source check is:
 
 ```sh
-node scripts/install.mjs review --repo /absolute/path/to/project --path SKILL.md
+npm run check
 ```
 
-If automatic merging cannot preserve both versions, prepare a resolution JSON file. `keep-local` retains the current bytes/deletion, `use-upstream` explicitly replaces/removes them, and `merged-file` uses a reviewed UTF-8 file inside the target repository. Re-preview and apply with the **same** resolution file and new hash:
+GitHub CI runs this check on Node 20 and 24. Local Skill validation covers this repository's simple frontmatter profile and local reference files; it is not a full YAML parser or live host certification. See the [maintenance roadmap](docs/roadmap.md) for current boundaries and future work.
 
-```sh
-node scripts/install.mjs preview --repo /absolute/path/to/project --resolutions /path/to/resolutions.json
-node scripts/install.mjs apply --repo /absolute/path/to/project --resolutions /path/to/resolutions.json --expected-plan-hash <new-hash>
-```
+## License and provenance
 
-Resolution example:
+Licensed under [MIT](LICENSE). Linked recommendation sources retain their own terms.
 
-```json
-{
-  "SKILL.md": { "action": "keep-local" },
-  "references/governance-skeleton.md": { "action": "merged-file", "file": "upgrade/reviewed-skeleton.md" }
-}
-```
-
-Only include decisions for resources shown in the preview. Review output contains installed source text; do not publish it if local customizations contain private material. See [upgrade safety and recovery](docs/installation-upgrades.md) for v1 compatibility, backups, conflicts and limits. Project-specific adaptations may stay local; generally reusable fixes belong in the canonical source.
-
-## Development boundary
-
-Shopee Utils was the first pilot and remains a consumer/validation case. Its `.ai-project-bootstrap/` and `docs/agent/` files are project state and are intentionally not part of this repository.
-
-See [docs/architecture.md](docs/architecture.md) for source, installation, and upgrade boundaries.
-The original pilot lineage is recorded in [docs/provenance.md](docs/provenance.md).
-
-## Open-source maintenance
-
-Licensed under [MIT](LICENSE). Contributions and reproducible issues are welcome; see [CONTRIBUTING.md](CONTRIBUTING.md) and the [maintenance roadmap](docs/roadmap.md). CI is configured for Node 20/24; the workflow definition is not a claim that a remote run has passed.
+The project originated from a private repository pilot. Only reusable Skill source, synthetic tests, tooling and documentation belong here; see [provenance](docs/provenance.md).
