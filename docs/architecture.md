@@ -1,11 +1,27 @@
-# Distribution architecture
+# Architecture
+
+## Product direction
+
+Confirmed on 2026-11-20: `ai-project-bootstrap` is responsible for **AI coding environment initialization and ongoing updates/improvement** at project scope. Here, the environment includes project guidance, Skills, authority/read routes, repository-local checks and their declared tool requirements.
+
+The intended lifecycle is: establish an environment → compare changes → propose a scoped update → verify usability → use confirmed development problems to propose improvements → review their effect. The following distinction describes current implementation and planned capabilities; it does not announce their completion.
+
+| Area | Implemented foundation | Planned extension |
+| --- | --- | --- |
+| Initialization | Repository evidence, governance gap recommendations, authority ownership, reviewed changes and structural validation | Verify the initialized environment's applicable entrypoints and checks in the target project |
+| Ongoing updates | Skill distribution upgrades, local customization preservation, conflicts/recovery and manually invoked re-audit | A project environment baseline and an explainable re-audit delta covering adopted rules, tools, decisions and relevant evidence |
+| Ongoing improvement | Reusable recommendations and the ability to propose another reviewed change | Confirmed problem → improvement candidate → scoped validation → adoption/deferment → effect review, including simplification/removal of ineffective rules |
+
+Skill package upgrades and project environment updates are separate operations. An installer success does not prove that project guidance is current or its checks are usable. Topic coverage and valid links likewise do not establish real coding outcomes.
+
+See the [prioritized roadmap](roadmap.md#planned-environment-lifecycle) for deferred work and acceptance expectations. The planning below does not add commands, storage fields, automatic execution or new dependencies.
 
 ## Ownership
 
 - This repository is the sole authoring source for Skill instructions, references, TypeScript runtime sources and tests. Runtime implementation is authored under `src/scripts/**/*.mts`, with compiled `.mjs` artifacts committed under `scripts/` for portable execution.
 - A consumer repository owns its governance results: `AGENTS.md`, `docs/agent/`, and `.ai-project-bootstrap/`.
 - A consumer's `.agents/skills/ai-project-bootstrap/` directory is a managed copy produced by the installer.
-- Central learning and assessment remain in `ai-dev-grow`; no Skill Graph or mastery state is copied here.
+- Personal learning/mastery records and general task execution remain outside this project. Environment improvement must not introduce a dependency on a personal `ai-dev-grow` installation, copy a Skill Graph, or become another business-task state system.
 
 ## Initialization foundations
 
@@ -60,3 +76,27 @@ The validator now traverses bounded local references, validates supported chapte
 The runtime uses strict TypeScript with NodeNext modules. `.mts` sources emit `.mjs` into the existing `scripts/` tree; public commands and installer resource paths remain compatible. TypeScript and Node typings are pinned development dependencies with a lockfile, not installed-runtime dependencies. Tests stay JavaScript to verify the actual emitted/installed interface.
 
 `npm run check` builds/typechecks before running source tests and Skill validation. Source development begins with `npm ci`. The installer continues to copy compiled runtime, references, Agent metadata and license only; it does not copy `src`, node_modules, compiler configuration or development dependencies into consumers. CI on Node 20/24 verifies tests and that rebuilding leaves generated runtime unchanged.
+
+## Planned environment lifecycle
+
+These are design constraints for later implementation, not implemented APIs or a fixed new schema.
+
+### Environment baseline and re-audit delta
+
+Reuse the consumer's existing `.ai-project-bootstrap/` manifest, Registry, Change Plan and evidence contracts. Prefer source references, versions/digests and confirmed outcomes over a second copy of facts already owned by package/build files or product documents. Record which recommendations were adopted, adapted or deferred and why, while distinguishing upstream resources from project-local customization.
+
+A later re-audit should explain what changed since an accepted baseline: stack/modules, relevant checks, rule sources, local adaptations and unresolved gaps. Its output should separate newly needed changes, obsolete guidance and still-valid evidence. Changes to comparison scope or incomplete scanning must remain explicit; a changed report alone must not force a new full regression.
+
+### Environment usability validation
+
+Keep analysis read-only. Usability validation is a separate, explicitly authorized operation on selected repository-local checks, with known target, prerequisites and side effects. Do not execute arbitrary discovered strings, install global tools, alter credentials or access business databases automatically.
+
+Separate configured/declaratively present from actually executed and verified. Preserve failures, unavailable prerequisites and unverified scope; bind evidence to the target code/configuration and environment so unchanged results can be reused. Host integration still requires its own evidence.
+
+### Problem-driven improvement and review
+
+Accept explicitly confirmed, reusable observations about environment problems, with source and affected scope. Do not harvest private conversations, business data or inferred personal preferences. Produce reviewable improvement candidates that explain the problem, proposed minimal change, expected observable result and verification scope.
+
+Candidates may strengthen, simplify, consolidate or remove rules; improvement is not measured by document count. Adoption/deferment and later review should be traceable through existing project records. Use actual observations when assessing effects and mark insufficient evidence as unknown; do not invent savings or treat a passing check as proof of better coding.
+
+All three capabilities must retain scoped authorization, human edits, portable runtime operation and incremental verification. They should extend the existing evidence/recommendation/plan pipeline before introducing new infrastructure. Task orchestration, personal learning and autonomous deployment remain separate concerns.
