@@ -10,7 +10,7 @@ sources:
 
 # Testing and quality baseline
 
-- Map change types to proportionate tests instead of relying only on a generic full-suite instruction.
+- Map change types to proportionate tests instead of relying only on a generic full-suite instruction. For baseline, affected dependencies, result reuse and full-suite triggers, use the [incremental verification pack](incremental-verification.md).
 - Prefer behavior-level API/component tests for service flows; use unit tests for complex pure rules and focused failure reproduction.
 - Cover authorization, tenant isolation, cancellation, retries, resource cleanup, and external dependency failure where applicable.
 - Keep test intent readable at the requirement level and avoid mocks that merely reproduce implementation details.

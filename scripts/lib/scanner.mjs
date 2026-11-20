@@ -9,10 +9,11 @@ import { analyze as standards } from './analyzers/standards.mjs';
 import { analyze as quality } from './analyzers/quality.mjs';
 import { analyze as workflow } from './analyzers/workflow.mjs';
 import { analyze as git } from './analyzers/git.mjs';
+import { analyze as tooling } from './analyzers/tooling.mjs';
 import { analyze as governanceCoverage } from './analyzers/governance-coverage.mjs';
 import { buildRecommendations } from './recommendations.mjs';
 
-const ANALYZERS = { commands, git, governanceCoverage, guidance, inventory, quality, stack, standards, workflow };
+const ANALYZERS = { commands, git, governanceCoverage, guidance, inventory, quality, stack, standards, tooling, workflow };
 
 function stable(items) {
   return [...items].sort((a, b) => [a.source_path, a.kind, String(a.value)].join('\0').localeCompare([b.source_path, b.kind, String(b.value)].join('\0')));
@@ -40,7 +41,7 @@ export async function analyzeRepository({ repo, limits } = {}) {
 }
 
 export function assessMode({ analyzers = {}, warnings = [], file_paths = [] } = {}) {
-  const blocking = warnings.some(({ kind, analyzer }) => kind === 'scan-limit' || (kind === 'analyzer-error' && ['governanceCoverage', 'inventory', 'guidance', 'standards'].includes(analyzer)));
+  const blocking = warnings.some(({ kind, analyzer }) => kind === 'scan-limit' || (kind === 'analyzer-error' && ['governanceCoverage', 'inventory', 'guidance', 'standards', 'tooling'].includes(analyzer)));
   if (blocking) return { recommended_mode: 'consult-user', confidence: 'candidate', basis: ['repository evidence is incomplete'], requires_user_confirmation: true };
   if (file_paths.includes('.ai-project-bootstrap/manifest.yaml')) return { recommended_mode: 're-audit', confidence: 'confirmed', basis: ['.ai-project-bootstrap/manifest.yaml exists'], requires_user_confirmation: false };
   const sources = [...(analyzers.guidance ?? []), ...(analyzers.standards ?? [])].map(({ source_path }) => source_path);

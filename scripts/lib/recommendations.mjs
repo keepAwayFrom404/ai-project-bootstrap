@@ -1,5 +1,29 @@
 const PACKS = [
   {
+    pack_id: 'progressive-loading', version: 1, concern: 'progressive-loading',
+    reference_path: 'references/packs/progressive-loading.md',
+    sources: ['https://agents.md/'],
+    applies: ({ coverage }) => coverage.has('progressive-loading'), trigger: ['source-or-agent-guidance'],
+  },
+  {
+    pack_id: 'tool-independence', version: 1, concern: 'tool-independence',
+    reference_path: 'references/packs/tool-independence.md',
+    sources: ['https://agents.md/'],
+    applies: ({ coverage }) => coverage.has('tool-independence'), trigger: ['source-or-agent-guidance'],
+  },
+  {
+    pack_id: 'incremental-verification', version: 1, concern: 'incremental-verification',
+    reference_path: 'references/packs/incremental-verification.md',
+    sources: ['https://github.com/google-gemini/gemini-cli/blob/main/GEMINI.md'],
+    applies: ({ coverage }) => coverage.has('incremental-verification'), trigger: ['source-or-agent-guidance'],
+  },
+  {
+    pack_id: 'readable-code-boundaries', version: 1, concern: 'readable-code-boundaries',
+    reference_path: 'references/packs/readable-code-boundaries.md',
+    sources: ['https://google.github.io/eng-practices/review/reviewer/looking-for.html'],
+    applies: ({ coverage }) => coverage.has('readable-code-boundaries'), trigger: ['source-or-agent-guidance'],
+  },
+  {
     pack_id: 'frontend-react-typescript', version: 1, concern: 'frontend-engineering',
     reference_path: 'references/packs/frontend-react-typescript.md',
     sources: ['https://github.com/google/gts', 'https://github.com/google/styleguide/blob/gh-pages/tsguide.html'],

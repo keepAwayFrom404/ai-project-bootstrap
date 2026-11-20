@@ -17,6 +17,17 @@ Read [evidence-contract.md](references/evidence-contract.md) before interpreting
 When the user asks for standards baselines or improvement advice, also read [recommendation-contract.md](references/recommendation-contract.md) and only the applicable files under `references/packs/`.
 Recommendation `reference_path` values are relative to this Skill directory, not the target repository.
 
+## Four initialization foundations
+
+For new projects and re-audits, inspect `governanceCoverage` for progressive-loading, tool-independence, incremental-verification, and readable-code-boundaries. Load only the [matching packs](references/recommendation-contract.md); preserve existing authorities and adapt the evidenced gaps through the existing Change Plan.
+
+- Generate a small mandatory entrypoint and task-based routes, not a compulsory README/domain-document crawl. Setup, verification and troubleshooting belong behind explicit read triggers.
+- Inspect `tooling` command/path references before claiming portability. These are bounded advisory clues, not proof a tool is mandatory or authorized for removal. Do not execute discovered commands, inspect credentials, or import personal workflows automatically.
+- Require incremental checks for changed behavior and affected dependencies; broaden only with a stated reason or an existing CI gate. Reuse valid results and preserve failure/override evidence.
+- Derive readable naming, cohesive responsibilities, side effects and dependency direction from the real repository. Do not transplant one project's stack, line budgets or worker count.
+
+Read [generation guidance](references/initialization-foundations.md) when drafting or reconciling these rules. Scanner topic matches are not compliance or live host-behavior proof.
+
 ## Required workflow
 
 1. Run `node scripts/bootstrap.mjs analyze --repo <repo> --out <repo-local-evidence.json>`. Analyze is read-only except for that explicit output artifact.

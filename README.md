@@ -15,6 +15,12 @@ The repository root is the canonical Skill source. Copies under a consumer repos
 
 It does not replace feature-development workflows, OpenSpec/Comet, `ai-dev-grow`, AgentMemory, CodeGraph, tests, or CI.
 
+## Portable initialization foundations
+
+Analyze reports four advisory concerns: progressive loading, tool independence, incremental verification, and readable code/module boundaries. Matching packs provide adaptable rules; `tooling` reports bounded command/path references from instructions, project Skills/Hooks and development scripts without executing them or reproducing source-line values.
+
+These checks preserve existing project decisions. They do not install/remove workflows, generate automatic compliance guarantees, or force a pilot's framework, file size or worker count. See [generation guidance](references/initialization-foundations.md). Setup and troubleshooting stay on demand; local validation targets the scoped change and affected dependencies while preserving CI gates.
+
 ## Verify the source
 
 ```sh

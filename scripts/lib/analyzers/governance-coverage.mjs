@@ -1,8 +1,10 @@
 import { fact } from './common.mjs';
+import { FOUNDATION_CONCERNS } from './foundations.mjs';
 
 const MAX_DOCUMENT_BYTES = 256 * 1024;
 
 const CONCERNS = [
+  ...FOUNDATION_CONCERNS,
   {
     id: 'frontend-engineering',
     aliases: /front[- ]?end|frontend|前端工程|前端规范/i,

@@ -15,7 +15,7 @@ test('analyzeRepository emits sourced stable evidence without sensitive values',
   const evidence = await scanner.analyzeRepository({ repo: repo.root });
   assert.equal(evidence.schema_version, 'ai-project-bootstrap.evidence.v1');
   assert.equal(evidence.mode_assessment.recommended_mode, 'legacy-reconciliation');
-  assert.deepEqual(Object.keys(evidence.analyzers), ['commands', 'git', 'governanceCoverage', 'guidance', 'inventory', 'quality', 'stack', 'standards', 'workflow']);
+  assert.deepEqual(Object.keys(evidence.analyzers), ['commands', 'git', 'governanceCoverage', 'guidance', 'inventory', 'quality', 'stack', 'standards', 'tooling', 'workflow']);
   assert.ok(evidence.analyzers.stack.some((item) => item.kind === 'package-manager' && item.value === 'pnpm'));
   assert.ok(evidence.analyzers.stack.some((item) => item.kind === 'runtime' && item.source_path === 'packages/core/package.json'));
   assert.ok(evidence.analyzers.commands.some((item) => item.kind === 'quality-command' && item.value === 'npm test'));
