@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "rootDir": "src",
+    "outDir": ".",
+    "strict": true,
+    "noEmitOnError": true,
+    "skipLibCheck": true,
+    "types": [
+      "node"
+    ],
+    "noUnusedLocals": true,
+    "newLine": "lf"
+  },
+  "include": [
+    "src/**/*.mts"
+  ],
+  "exclude": [
+    "node_modules",
+    "scripts",
+    "tests"
+  ]
+}

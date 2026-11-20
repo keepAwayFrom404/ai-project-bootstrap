@@ -33,7 +33,7 @@ Skill 用于指导 Agent；不会自动重写项目，也不替代项目自己�
 
 ## 快速开始
 
-需要 **Node.js 20+**、**Git**，以及能读取 Skill 指令的 Agent。Node 代码只使用内置模块，不需要安装 npm 依赖、Python 或全局工作流 CLI。升级中的三方合并使用 Git。
+需要 **Node.js 20+**、**Git**，以及能读取 Skill 指令的 Agent。已提交的 Node 运行时只使用内置模块；安装和使用时，不需要安装 npm 依赖、Python 或全局工作流 CLI。升级中的三方合并使用 Git。
 
 克隆本源码仓库：
 
@@ -105,9 +105,10 @@ node scripts/install.mjs preview --repo /absolute/path/to/project
 
 可复用的改进在本仓库维护；消费项目拥有自己的规范产物和本地适配。
 
-按改动及受影响的消费方选择聚焦测试，命令与约定见[贡献指南](CONTRIBUTING.md)。完整源码检查入口为：
+按改动及受影响的消费方选择聚焦测试，命令与约定见[贡献指南](CONTRIBUTING.md)。运行时源码使用 `src/scripts/` 下的严格 TypeScript；编译后的 `.mjs` 保留原有命令和可直接使用的安装副本。源码开发需在仓库内安装已锁定的编译器。完整源码检查入口为：
 
 ```sh
+npm ci
 npm run check
 ```
 

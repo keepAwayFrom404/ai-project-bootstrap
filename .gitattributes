@@ -1,0 +1,2 @@
+/scripts/*.mjs linguist-generated=true
+/scripts/lib/**/*.mjs linguist-generated=true

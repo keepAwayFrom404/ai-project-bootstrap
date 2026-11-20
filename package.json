@@ -4,9 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "check": "npm run test && npm run validate:skill",
+    "check": "npm run build && npm run test && npm run validate:skill",
     "test": "node --test tests/*.test.mjs",
-    "validate:skill": "node scripts/validate-skill.mjs"
+    "validate:skill": "node scripts/validate-skill.mjs",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "engines": {
     "node": ">=20"
@@ -18,5 +20,9 @@
   },
   "bugs": {
     "url": "https://github.com/keepAwayFrom404/ai-project-bootstrap/issues"
+  },
+  "devDependencies": {
+    "@types/node": "20.19.9",
+    "typescript": "6.0.2"
   }
 }

@@ -33,7 +33,7 @@ The Skill guides an agent; it does not automatically rewrite a project or replac
 
 ## Quick start
 
-Requirements: **Node.js 20+**, **Git**, and an agent that can read Skill instructions. Node code uses built-in modules; no npm dependencies, Python or global workflow CLI are required. Three-way upgrade merges use Git.
+Requirements: **Node.js 20+**, **Git**, and an agent that can read Skill instructions. The committed Node runtime uses built-in modules; installing or using it needs no npm dependencies, Python or global workflow CLI. Three-way upgrade merges use Git.
 
 Clone this source repository:
 
@@ -105,9 +105,10 @@ Adoption refuses incomplete copies. The first normal upgrade preserves differenc
 
 This repository is the canonical source for reusable improvements. Consumer projects own their governance results and local adaptations.
 
-Choose focused tests for your change and its consumers; use the [contribution guide](CONTRIBUTING.md) for commands and expectations. The complete source check is:
+Choose focused tests for your change and its consumers; use the [contribution guide](CONTRIBUTING.md) for commands and expectations. Runtime source is maintained in strict TypeScript under `src/scripts/`; compiled `.mjs` files preserve the public commands and portable installed copies. Source development installs the pinned compiler locally. The complete source check is:
 
 ```sh
+npm ci
 npm run check
 ```
 

@@ -6,7 +6,7 @@ This is a direction for ongoing work, not a promise that unfinished capabilities
 
 - Read-only evidence, explicit authority/decision handling, reviewed project changes and hash-bound managed installation.
 - Progressive loading, tool independence, incremental verification and readable-code/module-boundary recommendation packs.
-- Node-only source validation, synthetic fixtures and a Node 20/24 CI definition.
+- Strict TypeScript runtime sources with committed dependency-free Node artifacts, synthetic fixtures and Node 20/24 CI.
 
 ## Next candidates
 

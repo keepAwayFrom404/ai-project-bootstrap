@@ -2,7 +2,7 @@
 
 ## Ownership
 
-- This repository is the sole authoring source for Skill instructions, references, deterministic scripts, and tests.
+- This repository is the sole authoring source for Skill instructions, references, TypeScript runtime sources and tests. Runtime implementation is authored under `src/scripts/**/*.mts`, with compiled `.mjs` artifacts committed under `scripts/` for portable execution.
 - A consumer repository owns its governance results: `AGENTS.md`, `docs/agent/`, and `.ai-project-bootstrap/`.
 - A consumer's `.agents/skills/ai-project-bootstrap/` directory is a managed copy produced by the installer.
 - Central learning and assessment remain in `ai-dev-grow`; no Skill Graph or mastery state is copied here.
@@ -54,3 +54,9 @@ Apply uses an exclusive installation lock, repeats preflight under that lock, pe
 ## Governance reference validation
 
 The validator now traverses bounded local references, validates supported chapter anchors, rejects repeated Registry concerns, and checks optional reading_routes against registered authorities. Chapter-scoped coverage uses only the selected section. External URLs remain unchecked and task triggers are not executed. See [supported syntax and limits](governance-validation.md).
+
+## TypeScript source and portable distribution
+
+The runtime uses strict TypeScript with NodeNext modules. `.mts` sources emit `.mjs` into the existing `scripts/` tree; public commands and installer resource paths remain compatible. TypeScript and Node typings are pinned development dependencies with a lockfile, not installed-runtime dependencies. Tests stay JavaScript to verify the actual emitted/installed interface.
+
+`npm run check` builds/typechecks before running source tests and Skill validation. Source development begins with `npm ci`. The installer continues to copy compiled runtime, references, Agent metadata and license only; it does not copy `src`, node_modules, compiler configuration or development dependencies into consumers. CI on Node 20/24 verifies tests and that rebuilding leaves generated runtime unchanged.

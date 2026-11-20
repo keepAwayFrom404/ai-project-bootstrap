@@ -4,14 +4,18 @@ This project maintains a small, portable AI-development governance Skill. Sugges
 
 ## Development
 
-Use Node.js 20 or later and Git. The runtime/tests/Skill repository validator use Node built-ins; no global coding agent, Python or npm dependencies are required for the checks.
+Use Node.js 20 or later and Git. The installed runtime/tests/Skill validator use Node built-ins. Source development uses the pinned TypeScript compiler and Node typings installed with npm ci; no global compiler, coding agent or Python is required.
 
 ```sh
+npm ci
+npm run build
 node --test tests/foundations.test.mjs tests/scanner.test.mjs
 npm run validate:skill
 ```
 
 Choose tests for changed behavior and affected consumers. Installer/resource changes also need `tests/install.test.mjs`; CLI changes need `tests/cli.test.mjs`. Reuse valid unchanged checks. `npm run check` runs all tests plus Skill validation and is the CI gate on Node 20/24, not a mandatory local rerun after every edit.
+
+Runtime sources live in `src/scripts/**/*.mts` under strict TypeScript. Keep public `.mjs` imports when authoring `.mts`; NodeNext resolves the source and emits the existing `.mjs` paths. `npm run typecheck` checks without emitting; `npm run build` updates committed runtime artifacts. Tests remain JavaScript and exercise those artifacts, including installed copies without compiler dependencies. CI also rejects stale generated files.
 
 The local Skill validator deliberately checks this repository's two plain, single-line frontmatter fields (`name`, `description`), non-empty instructions and local Markdown file references. It validates supported chapter fragments but is not a complete YAML/Markdown parser or certification for every Agent host. If the Skill needs richer metadata, change the profile and its tests explicitly. Host-specific validation may be added as an optional check rather than a hidden developer prerequisite.
 

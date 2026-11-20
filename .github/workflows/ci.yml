@@ -15,5 +15,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      # No package installation or global Agent tooling is required.
+      # The compiler is a pinned development dependency; consumers use committed JS.
+      - run: npm ci --ignore-scripts
       - run: npm run check
+      - name: Verify generated runtime
+        run: |
+          git diff --exit-code -- scripts
+          test -z "$(git ls-files --others --exclude-standard -- scripts)"
