@@ -11,7 +11,7 @@ This is a direction for ongoing work, not a promise that unfinished capabilities
 ## Next candidates
 
 1. Expand upgrade recovery cases and cross-platform evidence; v2 now preserves local changes and supports reviewed three-way reconciliation.
-2. Validate authority links and section routing across documents with bounded traversal; keep incomplete evidence explicit.
+2. Expand Markdown/MDX and section-routing evidence beyond the current bounded local link/anchor validator; keep unsupported syntax and incomplete traversal explicit.
 3. Make scanner scope/budgets explainable for large repositories with build/output copies, without weakening privacy or path safety.
 4. Collect synthetic examples across languages and existing project structures; improve heuristic precision from observed failures.
 

@@ -1,5 +1,6 @@
 import { fact } from './common.mjs';
 import { FOUNDATION_CONCERNS } from './foundations.mjs';
+import { parseMarkdown, registryRows, sectionText } from '../markdown.mjs';
 
 const MAX_DOCUMENT_BYTES = 256 * 1024;
 
@@ -124,11 +125,7 @@ async function readDocuments({ files, readText }) {
 
 function registryAuthorities(documents) {
   const registry = documents.find(({ path }) => path === 'docs/agent/README.md')?.text ?? '';
-  return registry.split('\n')
-    .filter((line) => /^\|/.test(line))
-    .map((line) => line.split('|').slice(1, -1).map((cell) => cell.trim()))
-    .filter(([concern, path]) => concern && path && !/^[-:]+$/.test(concern) && concern.toLowerCase() !== 'concern')
-    .map(([concern, path]) => ({ concern, path }));
+  return registryRows(registry).map(({ concern, target }) => ({ concern, path: target }));
 }
 
 async function projectSignals({ files, readText }) {
@@ -158,14 +155,19 @@ export async function analyze(context) {
     const aggregateMissingTopics = concern.topics.map(([topic]) => topic).filter((topic) => !coveredTopics.includes(topic));
     const sourcePaths = documents.filter(({ text }) => concern.topics.some(([, pattern]) => pattern.test(text))).map(({ path }) => path);
     const authority = authorities.find(({ concern: label }) => concern.aliases.test(label));
-    const authorityDocument = authority && documents.find(({ path }) => path === authority.path);
-    const authorityCoveredTopics = authorityDocument
-      ? concern.topics.filter(([, pattern]) => pattern.test(authorityDocument.text)).map(([topic]) => topic)
+    const [authorityPath, anchor] = authority?.path.split('#') ?? [];
+    const authorityDocument = authority && documents.find(({ path }) => path === authorityPath);
+    let authorityText = null;
+    if (authorityDocument) {
+      try { authorityText = sectionText(parseMarkdown(authorityDocument.text), anchor ? decodeURIComponent(anchor) : null); } catch {}
+    }
+    const authorityCoveredTopics = authorityText !== null
+      ? concern.topics.filter(([, pattern]) => pattern.test(authorityText)).map(([topic]) => topic)
       : [];
-    const missingTopics = authorityDocument
+    const missingTopics = authorityText !== null
       ? concern.topics.map(([topic]) => topic).filter((topic) => !authorityCoveredTopics.includes(topic))
       : aggregateMissingTopics;
-    const status = authorityDocument && authorityCoveredTopics.length === concern.topics.length
+    const status = authorityText !== null && authorityCoveredTopics.length === concern.topics.length
       ? 'covered'
       : coveredTopics.length === 0 ? 'missing' : 'partial';
     result.push({

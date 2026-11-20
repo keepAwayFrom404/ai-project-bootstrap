@@ -13,7 +13,7 @@ The existing coverage/recommendation pipeline now registers four stack-neutral c
 
 The `tooling` analyzer reads bounded instruction/Skill/Hook and package-script surfaces, reporting only tool labels or path-presence markers and source locations. It never runs discovered commands or determines whether a reference is required, optional or prohibited. This keeps portability review separate from tool installation and avoids importing the initializer's global workflow.
 
-Progressive loading is a documented routing contract; runtime loading/host context eviction, link-graph completeness, scanning-budget redesign are outside this change. Readability complements existing formatting governance rather than replacing it. Incremental verification preserves CI and does not infer test coverage from filename matches.
+Progressive loading is a documented routing contract; runtime loading/host context eviction, scanning-budget redesign are outside this change. Readability complements existing formatting governance rather than replacing it. Incremental verification preserves CI and does not infer test coverage from filename matches.
 
 ## Installation protocol
 
@@ -50,3 +50,7 @@ The v2 install manifest stores upstream digests in `files`, actual divergent dig
 Plans bind the destination, complete prior manifest digest, selected source tree, current bytes, decisions and manual candidate digest. `review` is a separate explicit read of a managed file's versions; normal previews expose metadata instead of source bodies. Native Git merge-file runs only on private temporary copies, with no target write during preview. Missing Git, binary divergence, corrupt snapshots and conflicts never imply permission to replace a file.
 
 Apply uses an exclusive installation lock, repeats preflight under that lock, persists upstream bases before target writes, checks each target before replacement, backs up existing replaced files, and writes the manifest last. This is per-file atomic replacement with recovery evidence, not a repository-wide transaction or crash-proof multi-file commit. See [installation upgrades](installation-upgrades.md).
+
+## Governance reference validation
+
+The validator now traverses bounded local references, validates supported chapter anchors, rejects repeated Registry concerns, and checks optional reading_routes against registered authorities. Chapter-scoped coverage uses only the selected section. External URLs remain unchecked and task triggers are not executed. See [supported syntax and limits](governance-validation.md).

@@ -111,10 +111,12 @@ node scripts/install.mjs preview --repo /absolute/path/to/project
 npm run check
 ```
 
-GitHub CI 在 Node 20 和 24 上运行这项检查。本地 Skill 校验只覆盖本仓库的简单元数据格式和本地文件引用，不是完整 YAML 解析或真实宿主认证。当前边界与后续方向见[维护路线图](docs/roadmap.md)。
+GitHub CI 在 Node 20 和 24 上运行这项检查。本地 Skill 校验只覆盖本仓库的简单元数据格式和本地文件引用，不是完整 YAML/Markdown 解析或真实宿主认证。当前边界与后续方向见[维护路线图](docs/roadmap.md)。
 
 ## 许可证与来源
 
 采用 [MIT](LICENSE) 许可证。链接到的推荐资料保留各自的使用条款。
 
 项目源自一个私有仓库中的试点。本仓库只保留可复用的 Skill 源码、合成测试、工具与文档，详见[来源记录](docs/provenance.md)。
+
+[规范链接与读取路由校验](docs/governance-validation.md)说明了支持的链接、章节锚点及校验边界。

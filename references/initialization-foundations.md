@@ -12,7 +12,7 @@ Use the existing analyze → decisions → Change Plan → verification protocol
 | Troubleshooting | existing troubleshooting section | actual failure or environment blockage |
 | Source rationale/history | existing decision or evidence record | provenance questions only |
 
-Preserve valid current paths. Create an optional file only when substantial rules justify it; a section in an existing authority is enough. Do not duplicate commands across entrypoints. Registry file paths identify authority; describe relevant sections/read triggers without making the entire linked graph mandatory. Material business contracts remain complete for the affected scope.
+Preserve valid current paths. Create an optional file only when substantial rules justify it; a section in an existing authority is enough. Do not duplicate commands across entrypoints. Registry file paths or validated file#chapter references identify authority; describe read triggers without making the entire linked graph mandatory. Optional manifest reading_routes can make the route destinations structurally checkable. Material business contracts remain complete for the affected scope.
 
 ## Tool independence
 
@@ -28,4 +28,4 @@ Derive module ownership from existing code and callers. Use business names, one 
 
 ## Limits
 
-Current topic checks are bounded keyword heuristics on registered authority content. `covered` means the documented topics matched; it does not validate recursive routing, every dependency edge or every global CLI. Tooling references may include examples, optional commands or prohibitions; classify them manually. Directory-safe link-graph validation and installer customization reconciliation are separate work, not implemented by these four foundations.
+Current topic checks are bounded keyword heuristics on registered authority content. `covered` means the documented topics matched; it does not validate recursive routing, every dependency edge or every global CLI. Tooling references may include examples, optional commands or prohibitions; classify them manually. Link-graph validation and installer customization reconciliation have their own deterministic checks; they do not turn topic matching into proof of live host behavior.

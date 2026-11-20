@@ -111,10 +111,12 @@ Choose focused tests for your change and its consumers; use the [contribution gu
 npm run check
 ```
 
-GitHub CI runs this check on Node 20 and 24. Local Skill validation covers this repository's simple frontmatter profile and local reference files; it is not a full YAML parser or live host certification. See the [maintenance roadmap](docs/roadmap.md) for current boundaries and future work.
+GitHub CI runs this check on Node 20 and 24. Local Skill validation covers this repository's simple frontmatter profile and local reference files; it is not a full YAML/Markdown parser or live host certification. See the [maintenance roadmap](docs/roadmap.md) for current boundaries and future work.
 
 ## License and provenance
 
 Licensed under [MIT](LICENSE). Linked recommendation sources retain their own terms.
 
 The project originated from a private repository pilot. Only reusable Skill source, synthetic tests, tooling and documentation belong here; see [provenance](docs/provenance.md).
+
+[Governance links and reading routes](docs/governance-validation.md) describes supported references, chapter anchors and validation limits.

@@ -1,5 +1,6 @@
-import { access, readFile } from 'node:fs/promises';
+import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
+import { validateGovernanceLinks } from './governance-links.mjs';
 import { ALLOWED_ACTIONS, validatePlanShape } from './plan.mjs';
 import { hashManagedTarget } from './manifest.mjs';
 import { captureRepositoryState, resolveInsideRepository } from './filesystem.mjs';
@@ -42,17 +43,9 @@ export async function validateGovernance({ repo, manifest }) {
     try { await readFile(join(repo, path), 'utf8'); checks.push({ path, ok: true }); }
     catch { errors.push(`missing core path: ${path}`); checks.push({ path, ok: false }); }
   }
-  try {
-    const registry = await readFile(join(repo, 'docs/agent/README.md'), 'utf8');
-    const rows = registry.split('\n').filter((line) => /^\|/.test(line)).map((line) => line.split('|').slice(1, -1).map((cell) => cell.trim())).filter(([concern]) => concern && !/^[-:]+$/.test(concern) && concern.toLowerCase() !== 'concern');
-    const concerns = rows.map(([concern]) => concern);
-    const duplicates = concerns.filter((value, index) => concerns.indexOf(value) !== index);
-    if (duplicates.length) errors.push(`duplicate authority: ${[...new Set(duplicates)].join(', ')}`);
-    for (const [, path] of rows) {
-      if (!path || /^https?:/.test(path)) continue;
-      try { await access(await resolveInsideRepository(repo, path)); } catch (error) { errors.push(`broken reference or path outside repository: ${path} (${error.message})`); }
-    }
-  } catch {}
+  const linkResult = await validateGovernanceLinks({ repo, manifest });
+  errors.push(...linkResult.errors);
+  warnings.push(...linkResult.warnings);
   if (!Array.isArray(manifest?.quality_commands) || manifest.quality_commands.length === 0) errors.push('missing executable quality command');
   else {
     for (const command of manifest.quality_commands) {
@@ -79,5 +72,5 @@ export async function validateGovernance({ repo, manifest }) {
     if (/CLAUDE\.md$/i.test(exception.path)) warnings.push(`adapter check deferred by manifest exception: ${exception.path}`);
   }
   if (manifest?.schema_version !== 'ai-project-bootstrap.manifest.v1') errors.push('unknown manifest schema');
-  return { ok: errors.length === 0, errors, warnings, checks };
+  return { ok: errors.length === 0, errors, warnings, checks, link_validation: { complete: linkResult.complete, document_count: linkResult.document_count } };
 }

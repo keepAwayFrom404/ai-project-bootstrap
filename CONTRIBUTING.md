@@ -13,7 +13,7 @@ npm run validate:skill
 
 Choose tests for changed behavior and affected consumers. Installer/resource changes also need `tests/install.test.mjs`; CLI changes need `tests/cli.test.mjs`. Reuse valid unchanged checks. `npm run check` runs all tests plus Skill validation and is the CI gate on Node 20/24, not a mandatory local rerun after every edit.
 
-The local Skill validator deliberately checks this repository's two plain, single-line frontmatter fields (`name`, `description`), non-empty instructions and local Markdown file references. It is not a complete YAML parser, fragment validator or certification for every Agent host. If the Skill needs richer metadata, change the profile and its tests explicitly. Host-specific validation may be added as an optional check rather than a hidden developer prerequisite.
+The local Skill validator deliberately checks this repository's two plain, single-line frontmatter fields (`name`, `description`), non-empty instructions and local Markdown file references. It validates supported chapter fragments but is not a complete YAML/Markdown parser or certification for every Agent host. If the Skill needs richer metadata, change the profile and its tests explicitly. Host-specific validation may be added as an optional check rather than a hidden developer prerequisite.
 
 ## Pull requests
 

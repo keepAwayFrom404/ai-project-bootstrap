@@ -2,6 +2,7 @@
 import { readFile, realpath } from 'node:fs/promises';
 import { dirname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { parseMarkdown } from './lib/markdown.mjs';
 
 // Repository profile: exactly two plain single-line strings, not a general YAML parser.
 export async function validateSkill(directory) {
@@ -26,22 +27,27 @@ export async function validateSkill(directory) {
   if (!description || description.length > 1024 || /[<>]|^\[TODO:/.test(description) || /^(?:[|>{[&*!"']|true$|false$|null$|~$|\d+$)/.test(description)) errors.push('description must be a completed plain string of 1–1024 characters without angle brackets');
   const body = content.slice(match[0].length);
   if (!body.trim()) errors.push('Skill instructions must not be empty');
-  // Validate only local Markdown destinations, without following external URLs or running code.
-  for (const link of body.matchAll(/\]\(([^\s)]+)\)/g)) {
-    const target = link[1];
-    if (/^https?:\/\//.test(target) || target.startsWith('#')) continue;
-    const path = target.split('#')[0];
-    if (/^[a-z][a-z0-9+.-]*:/i.test(path) || isAbsolute(path)) {
-      errors.push('Local Skill references must be repository-relative');
-      continue;
-    }
+  const parsed = parseMarkdown(body);
+  errors.push(...parsed.errors);
+  for (const { target } of parsed.links) {
+    if (/^https?:\/\//.test(target)) continue;
+    const [path, fragment] = target.split('#');
+    if (/^[a-z][a-z0-9+.-]*:/i.test(path) || isAbsolute(path)) { errors.push('Local Skill references must be repository-relative'); continue; }
     try {
-      const destination = await realpath(resolve(root, path));
+      const destination = await realpath(resolve(root, decodeURIComponent(path) || 'SKILL.md'));
       const local = relative(root, destination);
-      if (local === '..' || local.startsWith(`..${sep}`)) errors.push('Local Skill reference escapes the repository');
+      if (local === '..' || local.startsWith(`..${sep}`)) { errors.push('Local Skill reference escapes the repository'); continue; }
+      if (fragment) {
+        if (!/\.md$/i.test(destination)) errors.push('Chapter reference requires Markdown');
+        else {
+          const doc = destination === file ? parseMarkdown(content) : parseMarkdown(await readFile(destination, 'utf8'));
+          if (!doc.anchors.has(decodeURIComponent(fragment))) errors.push(`Missing Skill chapter reference: ${target}`);
+        }
+      }
     } catch (error) {
-      if (error.code !== 'ENOENT') throw error;
-      errors.push(`Missing local Skill reference: ${path}`);
+      if (error.code === 'ENOENT') errors.push(`Missing local Skill reference: ${path}`);
+      else if (error instanceof URIError) errors.push(`Invalid encoded Skill reference: ${target}`);
+      else throw error;
     }
   }
   return errors;
